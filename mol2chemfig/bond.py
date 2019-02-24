@@ -120,7 +120,7 @@ class Bond:
         # length is adjusted and rounded later, after all is parsed
 
         # apply molecule rotation
-        angle += self.options['rotate']
+        angle += self.options.rotate
         self.angle = angle
 
         # define marker
@@ -162,7 +162,7 @@ class Bond:
 
         # bond is already rotated at this stage, so we need to
         # rotate the ring center also
-        center_angle += self.options['rotate']
+        center_angle += self.options.rotate
         center_kink = (center_angle - self.angle) % 360
 
         if center_kink > 180:
@@ -424,7 +424,7 @@ class Bond:
         else:
             end_string_pos = self.end_atom.string_pos
 
-        if self.options['fancy_bonds'] \
+        if self.options.fancy_bonds \
            and self.bond_type in ('double', 'triple'):
 
             if self.bond_type == 'double':
@@ -463,7 +463,7 @@ class Bond:
         return code
 
     def indent(self, level, bond_code, atom_code='', comment_code=''):
-        stuff = ' ' * self.options['indent'] * level \
+        stuff = ' ' * self.options.indent * level \
                      + bond_code.rjust(cfm.BOND_CODE_WIDTH) \
                      + atom_code
 

@@ -24,9 +24,9 @@ class Molecule:
 
         # now it's time to flip and flop the coordinates
         for atom in self.atoms.values():
-            if self.options['flip_horizontal']:
+            if self.options.flip_horizontal:
                 atom.x = -atom.x
-            if self.options['flip_vertical']:
+            if self.options.flip_vertical:
                 atom.y = -atom.y
 
         self.bonds, self.atom_pairs = self.parseBonds()
@@ -68,7 +68,7 @@ class Molecule:
                     flagged_bond = flagged_bond.parent
 
             # process cross bonds
-            if self.options['cross_bond'] is not None:
+            if self.options.cross_bond is not None:
                 self.process_cross_bonds()
 
             # adjust bond lengths
@@ -216,7 +216,7 @@ class Molecule:
 
         this is unfortunately all a little hackish.
         '''
-        cross_bonds = self.options['cross_bond']
+        cross_bonds = self.options.cross_bond
 
         for start1, end1 in cross_bonds:
             start = start1 - 1
@@ -304,9 +304,9 @@ class Molecule:
         that has only one bond to the rest of the molecule,
         so that only the first angle is absolute.
         '''
-        if self.options['entry_atom'] is not None:
+        if self.options.entry_atom is not None:
             # -> zero index
-            entry_atom = self.atoms.get(self.options['entry_atom'] - 1)
+            entry_atom = self.atoms.get(self.options.entry_atom - 1)
             if entry_atom is None:
                 raise MCFError('Invalid entry atom number')
 
@@ -316,9 +316,9 @@ class Molecule:
             atoms.sort(key=lambda atom: len(atom.neighbors))
             entry_atom = atoms[0]
 
-        if self.options['exit_atom'] is not None:
+        if self.options.exit_atom is not None:
             # -> zero index
-            exit_atom = self.atoms.get(self.options['exit_atom'] - 1)
+            exit_atom = self.atoms.get(self.options.exit_atom - 1)
             if exit_atom is None:
                 raise MCFError('Invalid exit atom number')
         else:
@@ -340,7 +340,7 @@ class Molecule:
             try:
                 hydrogens = ra.countImplicitHydrogens()
             except IndigoException:
-                if self.options['strict']:
+                if self.options.strict:
                     raise
                 hydrogens = 0
 
@@ -474,7 +474,7 @@ class Molecule:
 
         outer_r, angle = compare_positions(atom.x, atom.y, center_x, center_y)
         # angle is based on raw coordinates - adjust for user-set rotation
-        angle += self.options['rotate']
+        angle += self.options.rotate
 
         # outer_r calculated from raw coordinates, must be adjusted
         # for bond scaling that may have taken place
@@ -534,7 +534,7 @@ class Molecule:
         tolerance = 0.05
         is_symmetric = (cd_spread <= tolerance and bl_spread <= tolerance)
 
-        if is_aromatic and is_symmetric and self.options['aromatic_circles']:
+        if is_aromatic and is_symmetric and self.options.aromatic_circles:
             # ring meets all requirements to be displayed with circle inside
             self.aromatizeRing(ring, center_x, center_y)
 
@@ -575,18 +575,18 @@ class Molecule:
         '''
         scale bonds according to user options
         '''
-        if self.options['bond_scale'] == 'keep':
+        if self.options.bond_scale == 'keep':
             pass
 
-        elif self.options['bond_scale'] == 'normalize':
+        elif self.options.bond_scale == 'normalize':
             lengths = [bond.length for bond in self.treebonds()]
-            lengths = [round(l, self.options['bond_round']) for l in lengths]
+            lengths = [round(l, self.options.bond_round) for l in lengths]
             lengths = collections.Counter(lengths)
             self.bond_scale = \
-                self.options['bond_stretch'] / lengths.most_common()
+                self.options.bond_stretch / lengths.most_common()
 
-        elif self.options['bond_scale'] == 'scale':
-            self.bond_scale = self.options['bond_stretch']
+        elif self.options.bond_scale == 'scale':
+            self.bond_scale = self.options.bond_stretch
 
         for bond in self.treebonds():
             bond.length = self.bond_scale * bond.length
@@ -623,7 +623,7 @@ class Molecule:
         Render a list of branching bonds indented and inside
         enclosing brackets.
         '''
-        branch_indent = self.options['indent']
+        branch_indent = self.options.indent
 
         for bond in bonds:
             padding = level * branch_indent + cfm.BOND_CODE_WIDTH
@@ -651,7 +651,7 @@ class Molecule:
             else:
                 first = branches.pop(0)
 
-            self._renderBranches(output, level+1, branches)
+            self._renderBranches(output, level + 1, branches)
             self._render(output, first, level)
 
     def dimensions(self):
@@ -666,7 +666,7 @@ class Molecule:
         '''
         minx = maxx = miny = maxy = None
 
-        alpha = self.options['rotate']
+        alpha = self.options.rotate
         alpha *= math.pi/180
 
         sinalpha = math.sin(alpha)

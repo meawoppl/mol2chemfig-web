@@ -159,13 +159,13 @@ def format_angle(options, angle, parent_angle):
     '''
     format prefix and number for bond angle
     '''
-    if options['relative_angles'] and parent_angle is not None:
+    if options.relative_angles and parent_angle is not None:
         angle -= parent_angle
         prefix = '::'
     else:
         prefix = ':'
 
-    angle = num_round(angle, options['angle_round'])
+    angle = num_round(angle, options.angle_round)
 
     return prefix + str(angle % 360)
 
@@ -199,14 +199,16 @@ def format_bond(options,
 
     # debug(tikz_styles, tikz_values)
 
-    if angle is None:   # angle is None -- first atom only. Is this ever used? Shouldn't
-        return ''       # let's try to eliminate once the rest is working
+    # angle is None -- first atom only. Is this ever used? Shouldn't
+    # let's try to eliminate once the rest is working
+    if angle is None:
+        return ''   
 
     angle = format_angle(options, angle, parent_angle)
 
     angle = specifier_default(angle, ':0')
 
-    length = num_round(length, options['bond_round'])
+    length = num_round(length, options.bond_round)
     length = specifier_default(length, 1)
 
     departure = specifier_default(departure, 0)
@@ -329,8 +331,8 @@ def format_atom(options,
     element_phantom = _mt['phantom'] % data['element']
 
     # deal with atom numbers first
-    if options['atom_numbers']:
-        if element == 'C' and not options['show_carbons']:
+    if options.atom_numbers:
+        if element == 'C' and not options.show_carbons:
             phantom = _mt['phantom'] % idx
             keys = ('atom_no', 'empty')
             return fill_atom(keys, data, phantom)
@@ -339,15 +341,15 @@ def format_atom(options,
         keys = ('atom_no', first_quadrant)
         return fill_atom(keys, data, element_phantom)
 
-    ## full atoms, no numbers
+    # full atoms, no numbers
 
     # neutrals
     if charge == 0:
 
         # empty carbons. This case is so simple we don't use a template.
         if data['element'] == 'C' \
-            and not options['show_carbons'] \
-            and (not options['show_methyls'] \
+            and not options.show_carbons \
+            and (not options.show_methyls \
                     or hydrogens < 3):
             return '', 0, '', 0
 
@@ -391,7 +393,7 @@ def format_atom_comment(options,
     '''
     render an optional end-of-line comment after a regular atom
     '''
-    if options['terse']:
+    if options.terse:
         return ''
     return str(idx)
 
@@ -404,7 +406,7 @@ def format_closure_comment(options,
     '''
     render an optional end of line comment after a ring-closing bond
     '''
-    if options['terse']:
+    if options.terse:
         return ''
     return '-> %s' % idx
 
@@ -423,7 +425,7 @@ def format_aromatic_ring(options,
     ring_bond_code = macro_templates['aromatic_circle_bond'] % values
     ring_code = macro_templates['aromatic_circle'] % radius
 
-    if options['terse']:
+    if options.terse:
         comment = ''
     else:
         comment = '(o)'
@@ -466,22 +468,22 @@ def format_output(options, output_list):
     '''
     # first, do a bit of prettification by removing excessive
     # indentation
-    _indent = ' ' * options['indent']
+    _indent = ' ' * options.indent
 
     _out = '\n'.join(output_list)
     _out = textwrap.dedent(_out).splitlines()
 
     output_list = [_indent + l for l in _out]
 
-    if options['submol_name'] is not None:
-        output_list.insert(0, r'\definesubmol{%s}{' % options['submol_name'])
+    if options.submol_name is not None:
+        output_list.insert(0, r'\definesubmol{%s}{' % options.submol_name)
         output_list.append(r'}')
 
-    elif options['chemfig_command']:
+    elif options.chemfig_command:
         output_list.insert(0, r'\chemfig{')
         output_list.append(r'}')
 
-    if options['terse']:
+    if options.terse:
         output_list = strip_output(output_list)
         joiner = '%\n'
     else:
