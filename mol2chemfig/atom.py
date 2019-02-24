@@ -1,25 +1,22 @@
-import math
 import string
 
-import chemfig_mappings as cfm
-
-from common import debug
+import mol2chemfig.chemfig_mappings as cfm
 
 # some atoms should carry their hydrogens to the left, rather than
 # to the right. This is applied to solitary atoms, but not to bonded
 # functional groups that contain those elements.
+hydrogen_lefties = "O S Se Te F Cl Br I At".split()
 
-hydrogen_lefties = "O S Se Te F Cl Br I At".split() # I hope these are all ...
 
-
-class Atom(object):
+class Atom:
     '''
     wrapper around toolkit atom object, augmented with coordinates
     helper class for molecule.Molecule
     '''
     explicit_characters = set(string.ascii_uppercase + string.digits)
 
-    quadrant_turf = 80      # 80 degrees have to remain free on either side
+    # 80 degrees have to remain free on either side
+    quadrant_turf = 80      
 
     quadrants = [   # quadrants for hydrogen placement
                      [0, 0, 'east'],
@@ -30,14 +27,15 @@ class Atom(object):
 
     charge_positions = [    # angles for placement of detached charges
                      [0, 15, 'top_right'],
-                     [1,165, 'top_left'],
+                     [1, 165, 'top_left'],
                      [2, 90, 'top_center'],
-                     [3,270, 'bottom_center'],
-                     [4,345, 'bottom_right'],
-                     [5,195, 'bottom_left']
+                     [3, 270, 'bottom_center'],
+                     [4, 345, 'bottom_right'],
+                     [5, 195, 'bottom_left']
     ]
 
-    charge_turf = 50   # reserved angle for charges - needs to be big enough for 2+
+    # reserved angle for charges - needs to be big enough for 2+
+    charge_turf = 50
 
     def __init__(self, options, idx, x, y, element, hydrogens, charge, radical, neighbors):
         self.options = options
@@ -78,7 +76,6 @@ class Atom(object):
         '''
 
         aux = []
-
         for priority, choice_angle, name in choices:
 
             score = 0
@@ -89,9 +86,6 @@ class Atom(object):
             aux.append((score, priority, name))
 
         aux.sort()
-
-        # if self.element == 'Cl':
-        #     debug(aux)
 
         named = [a[-1] for a in aux]
         return named
@@ -109,12 +103,15 @@ class Atom(object):
         Charges: precedence top right, top left, top straight,
                  bottom straight, others
         '''
-        if len(self.bond_angles) > 0:  # this atom is bonded
+        if len(self.bond_angles) > 0:
+            # this atom is bonded
             quadrants = self._score_angles(self.quadrants, self.quadrant_turf)
             self.first_quadrant = quadrants[0]
-            self.second_quadrant = quadrants[1]  # 2nd choice may be used for radical electrons
+            # 2nd choice may be used for radical electrons
+            self.second_quadrant = quadrants[1]
 
-        else: # this atom is solitary
+        else:
+            # this atom is solitary
             if self.element in hydrogen_lefties:
                 self.first_quadrant = 'west'
                 self.second_quadrant = 'east'
@@ -170,8 +167,8 @@ class Atom(object):
 
         marker_code = cfm.format_marker(self.marker)
         if marker_code:
-            comment_code = " " # force an empty comment, needed after markers
+            # force an empty comment, needed after markers
+            comment_code = " "
 
         self.explicit = bool(self.explicit_characters & set(atom_code))
-        # debug(self.idx, atom_code, self.explicit)
         return marker_code + atom_code, comment_code

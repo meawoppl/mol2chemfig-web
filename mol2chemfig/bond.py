@@ -1,12 +1,7 @@
-'''
-My name is Bond. JAMES Bond.
-'''
+import copy
+import math
 
-from copy import deepcopy, copy
-from math import atan, tan, pi
-
-import chemfig_mappings as cfm
-from common import debug
+import mol2chemfig.chemfig_mappings as cfm
 
 # bond stereo properties and valences
 from indigo import Indigo
@@ -50,7 +45,7 @@ def compare_positions(x1, y1, x2, y2):
             angle = 90
 
     else:
-        raw_angle = atan(abs(ydiff / xdiff)) * 180/pi
+        raw_angle = math.atan(abs(ydiff / xdiff)) * 180/pi
 
         if ydiff >= 0:
             if xdiff > 0:
@@ -172,18 +167,15 @@ class Bond(object):
 
     def clone(self):
         '''
-        deepcopy but keep original atoms
+        Shallow copy but keep original atoms
         '''
-        c = copy(self)
-        # c.start_atom, c.and_atom = self.start_atom, self.end_atom
-
-        return c
+        return copy.copy(self)
 
     def invert(self):
         '''
         draw a bond backwards.
         '''
-        c = deepcopy(self)
+        c = copy.deepcopy(self)
         c.start_atom, c.end_atom = self.end_atom, self.start_atom
         c.angle = (c.angle + 180) % 360
 
@@ -208,7 +200,6 @@ class Bond(object):
         '''
         draw this bond crossing over another.
         '''
-        # debug(self.start_atom.idx, self.end_atom.idx, self.tikz_styles, self.tikz_values)
         start_angles = self.upstream_angles()
         end_angles = self.downstream_angles()
 
@@ -232,7 +223,6 @@ class Bond(object):
         raw_angles = [int(round(a)) % 360 for a in raw_angles]
 
         reference_angle = int(round(self.angle - inversion_angle)) % 360
-        # debug(atom.idx, inversion_angle, reference_angle, raw_angles)
 
         raw_angles.remove(reference_angle)
 
@@ -278,19 +268,20 @@ class Bond(object):
 
         return (angle - 105) ** 2
 
-    def cotan100(self,angle):
+    def cotan100(self, angle):
         '''
         100 times cotan of angle, rounded
         '''
-        _tan = tan(angle * pi/180)
-        return int(round(100/_tan))
+        _tan = math.tan(angle * math.pi / 180)
+        return int(round(100 / _tan))
 
     def shorten_stroke(self, same_angle, other_angle):
         '''
         determine by how much to shorten the second stroke
         of a double bond.
         '''
-        if same_angle is None: # other_angle will be, too; don't shorten.
+        if same_angle is None:
+            # other_angle will be, too; don't shorten.
             return 0
 
         if same_angle <= 180:
@@ -331,13 +322,13 @@ class Bond(object):
                  (end_angles['left'] is None or \
                    (90 <= abs(end_angles['left']) <= 135 and \
                     90 <= abs(end_angles['right']) <= 135)):
-                       return None
+                        return None
 
             elif self.end_atom.explicit and \
                  (start_angles['left'] is None or \
                    (90 <= abs(start_angles['left']) <= 135 and \
                     90 <= abs(start_angles['right']) <= 135)):
-                       return None
+                        return None
 
         # at this point we are looking at either only implicit atoms
         # or extreme angles.
@@ -423,8 +414,6 @@ class Bond(object):
         if self.options['fancy_bonds'] \
            and self.bond_type in ('double', 'triple'):
 
-            # debug("b2c before ", self.start_atom.idx, self.end_atom.idx, self.tikz_styles, self.tikz_values)
-
             if self.bond_type == 'double':
                 fd = self.fancy_double()
 
@@ -433,17 +422,15 @@ class Bond(object):
 
                     self.tikz_styles.add("double")
                     self.tikz_styles.add(side)
-                    self.tikz_values.update( dict(start=start, end=end) )
+                    self.tikz_values.update(dict(start=start, end=end))
                     self.bond_type = 'decorated'
 
             elif self.bond_type == 'triple':
                 self.tikz_styles.add('triple')
                 start, end = self.fancy_triple()
 
-                self.tikz_values.update( dict(start=start, end=end) )
+                self.tikz_values.update(dict(start=start, end=end))
                 self.bond_type = 'decorated'
-
-            # debug("b2c after ", self.start_atom.idx, self.end_atom.idx, self.tikz_styles, self.tikz_values)
 
         code = cfm.format_bond(
                     self.options,
@@ -471,7 +458,6 @@ class Bond(object):
             stuff += "% " + comment_code
 
         return stuff.rstrip()
-
 
     def render(self, level):
         '''
@@ -517,7 +503,7 @@ class AromaticRingBond(Bond):
 
     def __init__(self,  options, parent, angle, length, inner_r):
         self.options = options
-        self.angle = cfm.num_round(angle,1) % 360
+        self.angle = cfm.num_round(angle, 1) % 360
         if parent is not None:
             self.parent_angle = parent.angle
         else:
@@ -538,5 +524,3 @@ class AromaticRingBond(Bond):
                                                              self.radius)
 
         return self.indent(level, ring_bond_code, ring_code, comment)
-
-

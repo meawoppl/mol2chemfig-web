@@ -6,12 +6,12 @@ the TeX syntax defined by the chemfig package.
 '''
 
 import textwrap
-import common
+import mol2chemfig.common as common
 
-from common import debug
 
 BOND_CODE_WIDTH = 50        # space for bonds - generous upfront, will be trimmed at the end
 TERSE_LINE_WIDTH = 75       # in terse code format, force linebreaks
+
 
 def num_round(num, sig):
     '''
@@ -22,130 +22,134 @@ def num_round(num, sig):
         return int(res)
     return res
 
-bond_codes = dict( # bond_type -> chemfig bond code. defaults to '-'
-    double =    '=',
-    triple =    '~',
-    upto =      '<',
-    downto =    '<:',
-    upfrom =    '>',
-    downfrom =  '>:'
+
+ # bond_type -> chemfig bond code. defaults to '-'
+bond_codes = dict(
+    double='=',
+    triple='~',
+    upto='<',
+    downto='<:',
+    upfrom='>',
+    downfrom='>:'
 )
 
-bond_type_tikz = dict( # bond type -> tikz
-    link = 'draw=none',
-    either = 'mcfwavy'
+# bond type -> tikz
+bond_type_tikz = dict(
+    link='draw=none',
+    either='mcfwavy'
 )
 
-bond_styles = dict( # bond style -> tikz template
-    cross = 'mcfx={%(bgstart)s}{%(bgend)s}',
-    double_left = 'dbl={%(start)s}{%(end)s}',
-    double_right = 'dbr={%(start)s}{%(end)s}',
-    triple = 'trpl={%(start)s}{%(end)s}',
+bond_styles = dict(
+    # bond style -> tikz template
+    cross='mcfx={%(bgstart)s}{%(bgend)s}',
+    double_left='dbl={%(start)s}{%(end)s}',
+    double_right='dbr={%(start)s}{%(end)s}',
+    triple='trpl={%(start)s}{%(end)s}',
     # combined styles for double, triple and cross
-    cross_double_left = 'dblx={%(start)s}{%(end)s}{%(bgstart)s}{%(bgend)s}',
-    cross_double_right = 'dbrx={%(start)s}{%(end)s}{%(bgstart)s}{%(bgend)s}',
-    cross_triple = 'trplx={%(start)s}{%(end)s}{%(bgstart)s}{%(bgend)s}'
+    cross_double_left='dblx={%(start)s}{%(end)s}{%(bgstart)s}{%(bgend)s}',
+    cross_double_right='dbrx={%(start)s}{%(end)s}{%(bgstart)s}{%(bgend)s}',
+    cross_triple='trplx={%(start)s}{%(end)s}{%(bgstart)s}{%(bgend)s}'
 )
 
 bond_style_shortcuts = { # style short cuts for double bonds in hexagons etc
-    "dbr={58}{58}" : "drh",
-    "dbl={58}{58}" : "dlh",
-    "dbr={0}{58}"  : "drhe",
-    "dbl={0}{58}"  : "dlhe",
-    "dbr={58}{0}"  : "drhs",
-    "dbl={58}{0}"  : "dlhs",
-    "dbr={0}{0}"   : "drn",
-    "dbl={0}{0}"   : "dln"
+    "dbr={58}{58}": "drh",
+    "dbl={58}{58}": "dlh",
+    "dbr={0}{58}": "drhe",
+    "dbl={0}{58}": "dlhe",
+    "dbr={58}{0}": "drhs",
+    "dbl={58}{0}": "dlhs",
+    "dbr={0}{0}": "drn",
+    "dbl={0}{0}": "dln",
 }
 
-macro_templates = dict( # various custom LaTeX macros
+# various custom LaTeX macros
+macro_templates = dict(
+    # templates for charges
+    plus_charge=r'\mcfplus',
+    minus_charge=r'\mcfminus',
 
-    ## templates for charges
-    plus_charge = r'\mcfplus',
-    minus_charge = r'\mcfminus',
+    # template for phantom that forms the end of ring-closing bond
+    phantom=r'\phantom{%s}',    # phantom at end of ring-closing bonds
 
-    ## template for phantom that forms the end of ring-closing bond
-    phantom = r'\phantom{%s}',    # phantom at end of ring-closing bonds
+    # template for drawing a circle inside an aromatic ring
+    aromatic_circle=r'\mcfcringle{%s}',
 
-    ## template for drawing a circle inside an aromatic ring
-    aromatic_circle = r'\mcfcringle{%s}',
+    # template for the bond connecting the circle to the atom
+    aromatic_circle_bond=r'-[%(angle)s,%(length)s,,,draw=none]',
 
-    ## template for the bond connecting the circle to the atom
-    aromatic_circle_bond = r'-[%(angle)s,%(length)s,,,draw=none]',
+    # cross bonds
+    cross_blank=r'draw=none',
+    cross_draw=r'mcfcrossbond',
 
-    ## cross bonds
-    cross_blank = r'draw=none',
-    cross_draw = r'mcfcrossbond',
-
-    ## markers identifying atoms and bonds
-    marker = r'@{%s}'
+    # markers identifying atoms and bonds
+    marker=r'@{%s}'
 )
 
 radical_templates = dict(
-    east = r'\lewis{0%s,%s}',
-    north = r'\lewis{2%s,%s}',
-    west = r'\lewis{4%s,%s}',
-    south = r'\lewis{6%s,%s}'
+    east=r'\lewis{0%s,%s}',
+    north=r'\lewis{2%s,%s}',
+    west=r'\lewis{4%s,%s}',
+    south=r'\lewis{6%s,%s}'
 )
 
 atom_templates = dict(
-    ## templates for atoms, specialized for different numbers and preferred
-    ## quadrants of attached hydrogens and charges
+    # templates for atoms, specialized for different numbers and preferred
+    # quadrants of attached hydrogens and charges
 
     # atom numbers
-    atom_no = dict(
-                empty = (r'\mcfatomno{%(number)s}', 0),
-                east = (r'\mcfright{%(element)s}{\mcfatomno{%(number)s}}', 0),
-                west = (r'\mcfleft{\mcfatomno{%(number)s}}{%(element)s}', 0),
-                north = (r'\mcfabove{%(element)s}{\mcfatomno{%(number)s}}', 0),
-                south = (r'\mcfbelow{%(element)s}{\mcfatomno{%(number)s}}', 0)
-            ),
+    atom_no=dict(
+        empty=(r'\mcfatomno{%(number)s}', 0),
+        east=(r'\mcfright{%(element)s}{\mcfatomno{%(number)s}}', 0),
+        west=(r'\mcfleft{\mcfatomno{%(number)s}}{%(element)s}', 0),
+        north=(r'\mcfabove{%(element)s}{\mcfatomno{%(number)s}}', 0),
+        south=(r'\mcfbelow{%(element)s}{\mcfatomno{%(number)s}}', 0)
+    ),
 
-    neutral = dict(
-                # one hydrogen
-                one_h = dict(
-                        east = (r'%(element)sH', 1),
-                        west = (r'H%(element)s', 2),
-                        north = (r'\mcfabove{%(element)s}{H}', 0),
-                        south = (r'\mcfbelow{%(element)s}{H}', 0)
-                ),
+    neutral=dict(
+        # one hydrogen
+        one_h=dict(
+            east=(r'%(element)sH', 1),
+            west=(r'H%(element)s', 2),
+            north=(r'\mcfabove{%(element)s}{H}', 0),
+            south=(r'\mcfbelow{%(element)s}{H}', 0)
+        ),
 
-                # multiple hydrogens
-                more_h = dict(
-                        east = (r'%(element)sH_%(hydrogens)s', 1),
-                        west = (r'H_%(hydrogens)s%(element)s', 2),
-                        north = (r'\mcfabove{%(element)s}{\mcfright{H}{_%(hydrogens)s}}', 0),
-                        south = (r'\mcfbelow{%(element)s}{\mcfright{H}{_%(hydrogens)s}}', 0)
-                ),
+        # multiple hydrogens
+        more_h=dict(
+            east=(r'%(element)sH_%(hydrogens)s', 1),
+            west=(r'H_%(hydrogens)s%(element)s', 2),
+            north=(r'\mcfabove{%(element)s}{\mcfright{H}{_%(hydrogens)s}}', 0),
+            south=(r'\mcfbelow{%(element)s}{\mcfright{H}{_%(hydrogens)s}}', 0)
+        ),
     ),
 
     # charged
-    charged = dict(
-                no_h = dict(
-                        top_right = (r'\mcfright{%(element)s}{^{%(charge)s}}', 0),
-                        top_left = (r'^{%(charge)s}%(element)s', 2),
-                        top_center = (r'\mcfabove{%(element)s}{_{%(charge)s}}', 0),
-                        bottom_right = (r'\mcfright{%(element)s}{_{%(charge)s}}', 0),
-                        bottom_left = (r'_{%(charge)s}%(element)s', 2),
-                        bottom_center = (r'\mcfbelow{%(element)s}{^{%(charge)s}}', 0)
-                ),
+    charged=dict(
+        no_h=dict(
+            top_right=(r'\mcfright{%(element)s}{^{%(charge)s}}', 0),
+            top_left=(r'^{%(charge)s}%(element)s', 2),
+            top_center=(r'\mcfabove{%(element)s}{_{%(charge)s}}', 0),
+            bottom_right=(r'\mcfright{%(element)s}{_{%(charge)s}}', 0),
+            bottom_left=(r'_{%(charge)s}%(element)s', 2),
+            bottom_center=(r'\mcfbelow{%(element)s}{^{%(charge)s}}', 0)
+        ),
 
-                # one hydrogen
-                one_h = dict(
-                        east = (r'%(element)sH^{%(charge)s}', 1),
-                        h_west = (r'^{%(charge)s}H%(element)s', 3),
-                        north = (r'\mcfaboveright{%(element)s}{H}{^{%(charge)s}}',0),
-                        south = (r'\mcfbelowright{%(element)s}{H}{^{%(charge)s}}',0)
-                ),
+        # one hydrogen
+        one_h=dict(
+            east=(r'%(element)sH^{%(charge)s}', 1),
+            h_west=(r'^{%(charge)s}H%(element)s', 3),   # NOTE(meawoppl) - TYPO?
+            north=(r'\mcfaboveright{%(element)s}{H}{^{%(charge)s}}', 0),
+            south=(r'\mcfbelowright{%(element)s}{H}{^{%(charge)s}}', 0)
+        ),
 
-                # more hydrogens
-                more_h = dict(
-                        east = (r'%(element)sH_%(hydrogens)s^{%(charge)s}', 1),
-                        west = (r'^{%(charge)s}H_%(hydrogens)s%(element)s', 3),
-                        north = (r'\mcfaboveright{%(element)s}{H}{^{%(charge)s}_%(hydrogens)s}',0),
-                        south = (r'\mcfbelowright{%(element)s}{H}{^{%(charge)s}_%(hydrogens)s}',0)
-                )
-     )
+        # more hydrogens
+        more_h=dict(
+            east=(r'%(element)sH_%(hydrogens)s^{%(charge)s}', 1),
+            west=(r'^{%(charge)s}H_%(hydrogens)s%(element)s', 3),
+            north=(r'\mcfaboveright{%(element)s}{H}{^{%(charge)s}_%(hydrogens)s}', 0),
+            south=(r'\mcfbelowright{%(element)s}{H}{^{%(charge)s}_%(hydrogens)s}', 0)
+        )
+    )
 )
 
 
@@ -174,8 +178,8 @@ def specifier_default(val, default):
         return ""
     return str(val)
 
-# the master bond formatter
 
+# the master bond formatter
 def format_bond(options,
                 angle,
                 parent_angle,
@@ -316,9 +320,9 @@ def format_atom(options,
         radical_element = radical_templates[radical_quadrant] % (radical_symbol, element)
 
     data = dict(
-        number = idx,
-        hydrogens = hydrogens,
-        element = radical_element
+        number=idx,
+        hydrogens=hydrogens,
+        element=radical_element
     )
 
     # we almost always need the same phantom string, so we prepare it once
@@ -359,8 +363,7 @@ def format_atom(options,
         return fill_atom(keys, data, element_phantom)
 
 
-    ## at this point, we have a charged atom
-
+    # at this point, we have a charged atom
     # format dict entry for charge, as it is configurable
     if charge > 0:
         data['charge'] = _mt['plus_charge']
@@ -413,9 +416,9 @@ def format_aromatic_ring(options,
                          radius):
 
     values = dict(
-                angle=format_angle(options, angle, parent_angle),
-                length=specifier_default(length, 1)
-             )
+        angle=format_angle(options, angle, parent_angle),
+        length=specifier_default(length, 1)
+    )
 
     ring_bond_code = macro_templates['aromatic_circle_bond'] % values
     ring_code = macro_templates['aromatic_circle'] % radius
