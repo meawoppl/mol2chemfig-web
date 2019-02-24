@@ -1,4 +1,5 @@
-import math, string
+import math
+import string
 
 import chemfig_mappings as cfm
 
@@ -9,6 +10,7 @@ from common import debug
 # functional groups that contain those elements.
 
 hydrogen_lefties = "O S Se Te F Cl Br I At".split() # I hope these are all ...
+
 
 class Atom(object):
     '''
@@ -58,7 +60,6 @@ class Atom(object):
         else:
             self.marker = ""
 
-
     def _score_angle(self, a, b, turf):
         '''
         helper. calculates absolute angle between a and b.
@@ -67,10 +68,9 @@ class Atom(object):
         if angle falls within turf.
         '''
         diff = (a-b) % 360
-        angle = min(diff,360-diff)
+        angle = min(diff, 360 - diff)
 
         return (max(0, turf - angle)) ** 2
-
 
     def _score_angles(self, choices, turf):
         '''
@@ -90,12 +90,11 @@ class Atom(object):
 
         aux.sort()
 
-        #if self.element == 'Cl':
-            #debug(aux)
+        # if self.element == 'Cl':
+        #     debug(aux)
 
         named = [a[-1] for a in aux]
         return named
-
 
     def score_angles(self):
         '''
@@ -110,10 +109,10 @@ class Atom(object):
         Charges: precedence top right, top left, top straight,
                  bottom straight, others
         '''
-        if len(self.bond_angles) > 0: # this atom is bonded
+        if len(self.bond_angles) > 0:  # this atom is bonded
             quadrants = self._score_angles(self.quadrants, self.quadrant_turf)
             self.first_quadrant = quadrants[0]
-            self.second_quadrant = quadrants[1] # 2nd choice may be used for radical electrons
+            self.second_quadrant = quadrants[1]  # 2nd choice may be used for radical electrons
 
         else: # this atom is solitary
             if self.element in hydrogen_lefties:
@@ -124,7 +123,6 @@ class Atom(object):
                 self.second_quadrant = 'west'
 
         self.charge_angle = self._score_angles(self.charge_positions, self.charge_turf)[0]
-
 
     def render_phantom(self):
         '''
@@ -146,31 +144,29 @@ class Atom(object):
                                     )
         return atom_code, comment_code
 
-
     def render(self):
         '''
         render the atom and a comment
         '''
-        atom_code, self.string_pos, \
-                   self.phantom, self.phantom_pos = cfm.format_atom(
-                                                        self.options,
-                                                        self.idx + 1,
-                                                        self.element,
-                                                        self.hydrogens,
-                                                        self.charge,
-                                                        self.radical,
-                                                        self.first_quadrant,
-                                                        self.second_quadrant,
-                                                        self.charge_angle
-                                                    )
+        atom_code, self.string_pos, self.phantom, self.phantom_pos = cfm.format_atom(
+            self.options,
+            self.idx + 1,
+            self.element,
+            self.hydrogens,
+            self.charge,
+            self.radical,
+            self.first_quadrant,
+            self.second_quadrant,
+            self.charge_angle
+        )
 
         comment_code = cfm.format_atom_comment(
-                                        self.options,
-                                        self.idx + 1,
-                                        self.element,
-                                        self.hydrogens,
-                                        self.charge
-                                    )
+            self.options,
+            self.idx + 1,
+            self.element,
+            self.hydrogens,
+            self.charge
+        )
 
         marker_code = cfm.format_marker(self.marker)
         if marker_code:
@@ -179,5 +175,3 @@ class Atom(object):
         self.explicit = bool(self.explicit_characters & set(atom_code))
         # debug(self.idx, atom_code, self.explicit)
         return marker_code + atom_code, comment_code
-
-

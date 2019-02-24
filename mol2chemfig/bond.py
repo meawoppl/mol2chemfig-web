@@ -31,6 +31,7 @@ bond_mapping = {
     Indigo.EITHER : 'either'
 }
 
+
 def compare_positions(x1, y1, x2, y2):
     '''
     calculate distance and angle between the
@@ -58,7 +59,7 @@ def compare_positions(x1, y1, x2, y2):
                 angle = 180 - raw_angle
         else:
             if xdiff > 0:
-               angle = -raw_angle
+                angle = -raw_angle
             else:
                 angle = 180 + raw_angle
 
@@ -134,7 +135,6 @@ class Bond(object):
         else:
             self.marker = ""
 
-
     def bond_dimensions(self):
         '''
         determine bond angle and distance between two atoms
@@ -145,7 +145,6 @@ class Bond(object):
                                  self.end_atom.x,
                                  self.end_atom.y
                                 )
-
 
     def is_clockwise(self, center_x, center_y):
         '''
@@ -171,7 +170,6 @@ class Bond(object):
         else:
             self.clockwise = -1
 
-
     def clone(self):
         '''
         deepcopy but keep original atoms
@@ -180,7 +178,6 @@ class Bond(object):
         # c.start_atom, c.and_atom = self.start_atom, self.end_atom
 
         return c
-
 
     def invert(self):
         '''
@@ -197,7 +194,6 @@ class Bond(object):
 
         return c
 
-
     def set_link(self):
         '''
         make this bond an invisible link. this also cancels
@@ -207,7 +203,6 @@ class Bond(object):
         self.tikz_styles = set()
         self.tikz_values = {}
         self.marker = ""
-
 
     def set_cross(self, last=False):
         '''
@@ -227,7 +222,6 @@ class Bond(object):
         self.tikz_values.update( dict(bgstart=start, bgend=end))
 
         self.is_last = last
-
 
     def _adjoining_angles(self, atom, inversion_angle=0):
         '''
@@ -250,7 +244,6 @@ class Bond(object):
 
         return int(round(angles[0])), int(round(angles[-1] ))
 
-
     def upstream_angles(self):
         '''
         determine the narrowest upstream left and upstream right angle.
@@ -262,7 +255,6 @@ class Bond(object):
             last = 360-last
 
         return dict(left=first, right=last)
-
 
     def downstream_angles(self):
         '''
@@ -276,7 +268,6 @@ class Bond(object):
 
         return dict(left=last, right=first)
 
-
     def angle_penalty(self, angle):
         '''
         scoring function used in picking sides for second
@@ -287,14 +278,12 @@ class Bond(object):
 
         return (angle - 105) ** 2
 
-
     def cotan100(self,angle):
         '''
         100 times cotan of angle, rounded
         '''
         _tan = tan(angle * pi/180)
         return int(round(100/_tan))
-
 
     def shorten_stroke(self, same_angle, other_angle):
         '''
@@ -315,7 +304,6 @@ class Bond(object):
                 angle = 90
 
         return self.cotan100(angle)
-
 
     def fancy_double(self):
         '''
@@ -393,7 +381,6 @@ class Bond(object):
 
         return side, start, end
 
-
     def fancy_triple(self):
         '''
         work out parameters for fancy triple bond. We don't
@@ -421,7 +408,6 @@ class Bond(object):
                 end = 0
 
         return start, end
-
 
     def bond_to_chemfig(self):
         '''

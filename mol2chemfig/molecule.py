@@ -13,7 +13,6 @@ from bond import Bond, DummyFirstBond, AromaticRingBond, compare_positions
 from indigo import IndigoException
 
 class Molecule(object):
-
     bond_scale = 1.0        # can be overridden by user option
     exit_bond = None        # the first bond in the tree that connects to the exit atom
 
@@ -232,8 +231,8 @@ class Molecule(object):
                 if combo in self.seen_bonds:
                     bond = self.bonds[combo]
                     break
-            else: # referenced bond doesn't exist
-                raise MCFError, "bond %s-%s doesn't exist" % (start1, end1)
+            else:  # referenced bond doesn't exist
+                raise MCFError("bond %s-%s doesn't exist" % (start1, end1))
 
             # very special case: the bond _might_ already be the very
             # last one to be rendered - then we just tag it
@@ -298,7 +297,6 @@ class Molecule(object):
         scored.sort()
         return scored[-1][-1]
 
-
     def pickFirstLastAtoms(self):
         '''
         If the first atom is not given, we try to pick one
@@ -308,7 +306,7 @@ class Molecule(object):
         if self.options['entry_atom'] is not None:
             entry_atom = self.atoms.get(self.options['entry_atom'] - 1) # -> zero index
             if entry_atom is None:
-                raise MCFError, 'Invalid entry atom number'
+                raise MCFError('Invalid entry atom number')
 
         else: # pick a default atom with few neighbors
             atoms = self.atoms.values()
@@ -318,12 +316,11 @@ class Molecule(object):
         if self.options['exit_atom'] is not None:
             exit_atom = self.atoms.get(self.options['exit_atom'] - 1) # -> zero index
             if exit_atom is None:
-                raise MCFError, 'Invalid exit atom number'
+                raise MCFError('Invalid exit atom number')
         else:
             exit_atom = None
 
         return entry_atom, exit_atom
-
 
     def parseAtoms(self):
         '''
@@ -363,7 +360,6 @@ class Molecule(object):
 
         return wrapped_atoms
 
-
     def parseBonds(self):
         '''
         read some bond attributes
@@ -376,7 +372,7 @@ class Molecule(object):
             start = bond.source().index()
             end = bond.destination().index()
 
-            bond_type = bond.bondOrder() # 1,2,3,4 for single, double, triple, aromatic
+            bond_type = bond.bondOrder()  # 1,2,3,4 for single, double, triple, aromatic
             stereo = bond.bondStereo()
 
             start_atom = self.atoms[start]
@@ -392,7 +388,6 @@ class Molecule(object):
             atom_pairs.append((start, end))
 
         return bonds, atom_pairs
-
 
     def parseTree(self, start_atom, end_atom):
         '''
@@ -489,7 +484,6 @@ class Molecule(object):
         arb = AromaticRingBond(self.options, bond, angle, outer_r, inner_r)
         bond.descendants.append(arb)
 
-
     def annotateRing(self, ring, is_aromatic):
         '''
         determine center, symmetry and aromatic character of ring
@@ -550,7 +544,6 @@ class Molecule(object):
             for bond in bonds:
                 bond.is_clockwise(center_x, center_y)
 
-
     def annotateRings(self):
         '''
         modify double bonds in rings. In aromatic rings, we optionally
@@ -572,7 +565,6 @@ class Molecule(object):
         for is_aromatic, ring in reversed(all_rings):
             self.annotateRing(ring, is_aromatic)
 
-
     def scaleBonds(self):
         '''
         scale bonds according to user options
@@ -592,7 +584,6 @@ class Molecule(object):
         for bond in self.treebonds():
             bond.length = self.bond_scale * bond.length
 
-
     def render(self):
         '''
         render molecule to chemfig
@@ -602,13 +593,11 @@ class Molecule(object):
 
         return output
 
-
     def render_user(self):
         '''
         returns code formatted according to user options
         '''
         return cfm.format_output(self.options, self._rendered)
-
 
     def render_server(self):
         '''
@@ -622,7 +611,6 @@ class Molecule(object):
 
         return cfm.format_output(params, self._rendered)
 
-
     def _renderBranches(self, output, level, bonds):
         '''
         render a list of branching bonds indented and inside enclosing brackets.
@@ -633,7 +621,6 @@ class Molecule(object):
             output.append("(".rjust(level * branch_indent + cfm.BOND_CODE_WIDTH))
             self._render(output, bond, level)
             output.append(")".rjust(level * branch_indent + cfm.BOND_CODE_WIDTH))
-
 
     def _render(self, output, bond, level):
         '''
@@ -656,13 +643,12 @@ class Molecule(object):
             self._renderBranches(output, level+1, branches)
             self._render(output, first, level)
 
-
     def dimensions(self):
         '''
         this calculates the approximate width and height
         of the rendered molecule, in units of chemfig
         standard bond length (multiply with chemfig's
-        \setatomsep parameter to obtain the physical size).
+        \\setatomsep parameter to obtain the physical size).
 
         It is only used for server side PDF generation,
         but maybe someone will have another use for it.
@@ -694,5 +680,3 @@ class Molecule(object):
         ysize = (maxy - miny) * self.bond_scale
 
         return xsize, ysize
-
-

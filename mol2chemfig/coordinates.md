@@ -1,3 +1,4 @@
+```python
 This one I can answer quickly. You need to the molecule's conformer:
 In [7]: AllChem.Compute2DCoords(m)
 Out[7]: 0
@@ -16,3 +17,4 @@ In [9]: for atom in m.GetAtoms():
 5 [0.60445528134793969, 0.30276238678307321, 0.0]
 6 [2.0677127601063026, 0.63272837117800962, 0.0]
 7 [3.0851004243562379, -0.46950678550683356, 0.0
+```

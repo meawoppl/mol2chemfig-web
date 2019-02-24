@@ -250,7 +250,6 @@ def format_bond(options,
     return bond_code + modifier + specifiers
 
 
-
 def fill_atom(keys, data, phantom, phantom_pos=0):
     '''
     helper for finalizing atom code. phantom_pos is the
@@ -393,6 +392,7 @@ def format_atom_comment(options,
         return ''
     return str(idx)
 
+
 def format_closure_comment(options,
                            idx,
                            element,
@@ -459,7 +459,7 @@ def strip_output(output_list):
 def format_output(options, output_list):
     '''
     optionally wrap the translated output into a command,
-    to ease inclusion in LaTeX documents with \input
+    to ease inclusion in LaTeX documents with \\input
     '''
     # first, do a bit of prettification by removing excessive
     # indentation

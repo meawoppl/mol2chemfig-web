@@ -3,13 +3,21 @@ accept input from command line or through the web and
 return the result.
 '''
 
-import urllib, os.path, traceback
+import urllib
+import os.path
+import traceback
+
 from indigo import Indigo, IndigoException
 
-import common, options, molecule
+# TODO(meawoppl) - Sweep import rename
+import mol2chemfig.common as common
+import mol2chemfig.options as options
+import mol2chemfig.molecule as molecule
+
 
 class HelpError(common.MCFError):
     pass
+
 
 class Processor(object):
     '''
@@ -34,20 +42,17 @@ class Processor(object):
         # data obtained from the proper source go here
         self.data_string = None
 
-
     def version_text(self):
         '''
         print the program version
         '''
         return common.version_text(progname=self.progname)
 
-
     def help_text(self):
         '''
         error messages for the command line interface.
         '''
         return common.help_text(progname=self.progname)
-
 
     def parseInputCli(self):
         '''
@@ -58,16 +63,17 @@ class Processor(object):
         if not self.rawargs and not self.data:
             ht = self.help_text()
 
-            raise HelpError, ht
+            raise HelpError(ht)
 
         # parse options and arguments
         try:
             parsed_options, datalist = self.optionparser.process_cli(self.rawargs)
-        except Exception, msg:
+        except Exception as e:
+            msg = e.message
             if str(msg).endswith('not recognized'): # getopt error
                 msg = str(msg) + \
                       ". Try %s --help to see a list of available options." % self.progname
-            raise HelpError, msg
+            raise HelpError(msg)
 
         # if we get here, we have parsed options and a possibly empty datalist
         self.options.update(parsed_options)
@@ -75,9 +81,9 @@ class Processor(object):
         # before we go on to check on the data, we will satisfy help requests,
         # which we treat like an error
         if self.options['help']:
-            raise HelpError, self.help_text()
+            raise HelpError(self.help_text())
         elif self.options['version']:
-            raise HelpError, self.version_text()
+            raise HelpError(self.version_text())
 
         if self.data is not None:
             datalist.append(self.data)
@@ -87,8 +93,8 @@ class Processor(object):
 
         if len(datalist) != 1:
             if not datalist:
-                raise common.MCFError, "No input data supplied"
-            raise common.MCFError, "Please give only one file or data string as input"
+                raise common.MCFError("No input data supplied")
+            raise common.MCFError("Please give only one file or data string as input")
 
         data = datalist[0]
 
@@ -96,10 +102,9 @@ class Processor(object):
             try:
                 data = open(data).read()
             except IOError:
-                raise common.MCFError, "Can't read file %s" % data
+                raise common.MCFError("Can't read file %s" % data)
 
         self.data_string = data
-
 
     def parseInputWeb(self):
         '''
@@ -108,12 +113,11 @@ class Processor(object):
         parsed_options, warnings = self.optionparser.process_form_fields(self.formfields)
 
         if warnings:
-            raise common.MCFError, '<br/>\n'.join(warnings)
+            raise common.MCFError('<br/>\n'.join(warnings))
 
         # no warnings ...
         self.options.update(parsed_options)
         self.data_string = self.data
-
 
     def process(self):
         '''
@@ -129,12 +133,11 @@ class Processor(object):
         # we now know how to deal with orphan atoms
         #atoms, bonds = tkmol.countAtoms(), tkmol.countBonds()
         #if atoms <= 1 or bonds == 0:
-            #raise common.MCFError, "Input contains no bonds---can't render structure"
+            #raise common.MCFError("Input contains no bonds---can't render structure")
 
         mol = molecule.Molecule(self.options, tkmol)
 
         return mol
-
 
     def parseMolecule(self):
         '''
@@ -156,7 +159,7 @@ class Processor(object):
                 url = common.pubchem_url % pubchemId
                 pubchemContent = urllib.urlopen(url).read()
             except IOError:
-                raise common.MCFError, 'No connection to PubChem'
+                raise common.MCFError('No connection to PubChem')
 
             self.data_string = pubchemContent
 
@@ -166,7 +169,7 @@ class Processor(object):
         try:
             tkmol = Indigo().loadMolecule(self.data_string)
         except IndigoException:
-            raise common.MCFError, "Invalid input data"
+            raise common.MCFError("Invalid input data")
 
         hydrogens = self.options['hydrogens']
 
@@ -197,15 +200,15 @@ def process(rawargs=None,
     try:
         mol = p.process()
 
-    except HelpError, msg:
-        return False, msg
+    except HelpError as e:
+        return False, e.message
 
-    except common.MCFError, msg:    # anticipated error - brief message enough
+    except common.MCFError as e:    # anticipated error - brief message enough
         msg = traceback.format_exc().splitlines()[-1]
         msg = msg[len('MCFError: '):]
-        return False, msg
+        return False, e.message
 
-    except Exception, msg:               # unexpected error - get full traceback
+    except Exception as e:               # unexpected error - get full traceback
         tb = traceback.format_exc()
         return False, tb
 

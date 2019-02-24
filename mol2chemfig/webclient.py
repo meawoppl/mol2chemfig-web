@@ -5,10 +5,16 @@ Through-the-web command line client for mol2chemfig.
 Depends only on Python standard library modules.
 '''
 
-import sys, httplib, urllib
+# NOTE(meawoppl) - needs modernaiztion to http.Server/Client etc.
+# import httplib
+import sys
+import urllib
+
+httplib = None
 
 serverUrl = "localhost:80"
 servlet = "/mol2chemfig/test"
+
 
 def rpc(**data):
     '''
@@ -37,7 +43,7 @@ else:
 
 rawoptions = ' '.join(rawinput)
 
-if rawdata and not '-d' in rawoptions and not '--direct-input' in rawoptions:
+if rawdata and '-d' not in rawoptions and '--direct-input' not in rawoptions:
     try:
         data = open(rawdata).read()
     except IOError:
@@ -47,5 +53,4 @@ else:
 
 result = rpc(progname=progname, options=rawoptions, cargo=data)
 
-print result
-
+print(result)

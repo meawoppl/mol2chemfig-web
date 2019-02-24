@@ -2,7 +2,7 @@
 common settings and a bit of infrastructure
 '''
 import sys
-from options import getParser
+from mol2chemfig.options import getParser
 
 _debug = False
 

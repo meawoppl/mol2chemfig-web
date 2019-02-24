@@ -45,17 +45,14 @@ class Option(object):
 
         self.help_text = help_text
 
-
     def _default(self):
         return None
-
 
     def validate_range(self, value):
         '''
         can be overridden if more general tests are needed
         '''
         return self.valid_range is None or value in self.valid_range
-
 
     def validate(self, value):
         success, converted = self._validate(value)
@@ -66,7 +63,6 @@ class Option(object):
             return True
         return False
 
-
     def validate_form_value(self, value):
         '''
         validation of option value received through a
@@ -75,13 +71,11 @@ class Option(object):
         '''
         return self.validate(value)
 
-
     def _validate(self, value):
         '''
         no-op default
         '''
         return True, value
-
 
     def short_getopt(self):
         '''
@@ -89,13 +83,11 @@ class Option(object):
         '''
         return self.short_name + ':'
 
-
     def long_getopt(self):
         '''
         long option template for getopt
         '''
         return self.long_name + '='
-
 
     def format_help(self, indent=30, linewidth=80):
         '''
@@ -115,7 +107,6 @@ class Option(object):
 
         return hwrap
 
-
     def format_tag_value(self, value):
         '''
         format the default value for insertion into form tag
@@ -123,7 +114,6 @@ class Option(object):
         if value is None:
             return ''
         return str(value)
-
 
     def format_tag(self, value=None):
         '''
@@ -137,14 +127,12 @@ class Option(object):
         return self.key, tag, self.form_text, self.help_text
 
 
-
 class BoolOption(Option):
 
     form_tag_template = r'''<input type="checkbox" name="%(key)s" value="yes" %(value)s/>'''
 
     def _default(self):
         return False
-
 
     def validate(self, value=None):
         '''
@@ -153,7 +141,6 @@ class BoolOption(Option):
         '''
         self.value = not self.default
         return True
-
 
     def validate_form_value(self, value):
         '''
@@ -164,14 +151,11 @@ class BoolOption(Option):
         self.value = True
         return True
 
-
     def short_getopt(self):
         return self.short_name
 
-
     def long_getopt(self):
         return self.long_name
-
 
     def format_tag_value(self, value):
         if value is True:
@@ -195,8 +179,7 @@ class SelectOption(Option):
         try:
             return self.valid_range[0]
         except (TypeError, IndexError):
-            raise OptionError, 'valid_range does not supply default'
-
+            raise OptionError('valid_range does not supply default')
 
     def _validate(self, value):
         ''''
@@ -204,15 +187,14 @@ class SelectOption(Option):
         '''
         return True, value.lower()
 
-
     def format_tag(self, value=None):
 
         value = value or self.default
 
         options = []
 
-        if not self.default in self.valid_range: # why am I doing this here?
-            raise OptionError, 'invalid default'
+        if not self.default in self.valid_range:  # why am I doing this here?
+            raise OptionError('invalid default')
 
         for option in self.valid_range:
             if option == value:
@@ -242,7 +224,6 @@ class TypeOption(Option):
             return True, converted
         except ValueError:
             return False, value
-
 
 
 class IntOption(TypeOption):
@@ -292,12 +273,11 @@ class OptionParser(object):
         self._options_by_name = {}
         self._options_by_key = {}
 
-
     def append(self, option):
         if option.short_name in self._options_by_name:
-            raise OptionError, "option name clash %s" % option.short_name
+            raise OptionError("option name clash %s" % option.short_name)
         if option.long_name in self._options_by_name:
-            raise OptionError, "option name clash %s" % option_short_name
+            raise OptionError("option name clash %s" % option_short_name)
 
         self._options_by_name[option.short_name] = option.key
         self._options_by_name[option.long_name] = option.key
@@ -368,17 +348,15 @@ class OptionParser(object):
                 msg = ["rejected value '%s' for option %s" % (value, optname)]
                 msg.append('Option usage:')
                 msg.extend(option.format_help())
-                raise OptionError, '\n'.join(msg)
+                raise OptionError('\n'.join(msg))
 
         return self.option_values(), args
-
 
     def format_for_getopt(self):
         shorts = ''.join([option.short_getopt() for option in self._options])
         longs = [option.long_getopt() for option in self._options]
 
         return shorts, longs
-
 
     def format_for_lua(self):
         '''
@@ -421,7 +399,7 @@ if __name__ == '__main__':  # test it
                 'absolute',
                 'a',
                 # default=True,
-                help_text = 'not relative. what happens if we choose to use a really, really, really excessively long help text here?'))
+                help_text='not relative. what happens if we choose to use a really, really, really excessively long help text here?'))
 
     p.append(IntOption(
                 'count',
@@ -447,12 +425,11 @@ if __name__ == '__main__':  # test it
                 'n',
                 default='chocolate'))
 
-
     rawinput = "-a -c 6 -p LP alpha beta gamma"
     options, args = p.process_cli(rawinput)
 
-    print 'options', options
-    print 'args', args
-    print
-    print p.format_help()
-    print
+    print('options', options)
+    print('args', args)
+    print()
+    print(p.format_help())
+    print()
