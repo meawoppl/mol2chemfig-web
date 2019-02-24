@@ -2,260 +2,228 @@
 option declarations. The options will be used to update the
 settings dict in module common.
 '''
-import mol2chemfig.optionparser as op
+import argparse
+import mol2chemfig.common
 
 
 def getParser():
     '''
     make sure the parser is created anew on each request
     '''
+    parser = argparse.ArgumentParser(
+        description=mol2chemfig.common.HEADER,
+        epilog=mol2chemfig.common.FOOTER)
 
-    parser = op.OptionParser()
+    parser.add_argument(
+        "--i", "--input",
+        default="file",
+        type=str,
+        choices="direct file pubchem".split(),
+        help="""How to interpret the argument. With 'file', mol2chemfig
+                expects a filename. With 'direct', the argument is
+                intrepreted directly; don't forget to put quotes around
+                it. With 'pubchem', the argument is treated as an
+                identifier for the PubChem database.""")
 
-    parser.append(
-        op.BoolOption(
-            "help",
-            "h",
-            default=False,
-            help_text="Print help message and exit"))
+    parser.add_argument(
+        "--z", "--terse",
+        type=bool,
+        default=False,
+        help="Remove all whitespace and comments from the output.")
 
-    parser.append(
-        op.BoolOption(
-            "version",
-            "b",
-            default=False,
-            help_text="Print program version and exit"))
+    parser.add_argument(
+        "--r", "--strict",
+        default=True,
+        type=bool,
+        help="""Abide by Indigo's chemical structure validation.
+                If true, mol2chemfig will fail if Indigo reports
+                that something is wrong with the molecule, like
+                a carbon with five bonds. If false, mol2chemfig
+                will ignore such errors""")
 
-    parser.append(
-        op.SelectOption(
-            "input",
-            "i",
-            key="input",
-            default="file",
-            valid_range="direct file pubchem".split(),
-            help_text="""How to interpret the argument. With 'file', mol2chemfig
-                         expects a filename. With 'direct', the argument is
-                         intrepreted directly; don't forget to put quotes around
-                         it. With 'pubchem', the argument is treated as an
-                         identifier for the PubChem database."""))
+    parser.add_argument(
+        "--d", "--indent",
+        default=4,
+        type=int,
+        help="""Number of spaces to use for indenting molecule
+                branches in generated code. Without effect when
+                'terse' option is passed. Affects only the generated
+                tex code, not the rendered molecule""")
 
-    parser.append(
-        op.BoolOption(
-            "terse",
-            "z",
-            default=False,
-            help_text="""Remove all whitespace and comments from the output.
-                         If you can still read it afterwards, Bill Gates
-                         wants your resume"""))
+    parser.add_argument(
+        "--u", "--recalculate-coordinates",
+        default=True,
+        type=bool,
+        help="""Discard existing coordinate and calculate new
+                ones from covalent structure. For smiles input,
+                this is performed implicitly""")
 
-    parser.append(
-        op.BoolOption(
-            "strict",
-            "r",
-            default=True,
-            help_text="""Abide by Indigo's chemical structure validation.
-                         If true, mol2chemfig will fail if Indigo reports
-                         that something is wrong with the molecule, like
-                         a carbon with five bonds. If false, mol2chemfig
-                         will ignore such errors"""))
+    # rotate?!!
+    parser.add_argument(
+        "--a", "--angle",
+        type=float,
+        default=0.0,
+        help="Rotate molecule counterclockwise by this angle")
 
-    parser.append(
-        op.IntOption(
-            "indent",
-            "d",
-            default=4,
-            help_text="""Number of spaces to use for indenting molecule
-                         branches in generated code. Without effect when
-                         'terse' option is passed. Affects only the generated
-                         tex code, not the rendered molecule"""))
+    parser.add_argument(
+        "--v", "--relative-angles",
+        type=bool,
+        default=False,
+        help="Use relative bond angles")
 
-    parser.append(
-        op.BoolOption(
-            "recalculate-coordinates",
-            "u",
-            key="recalculate_coordinates",
-            help_text="""Discard existing coordinate and calculate new
-                         ones from covalent structure. For smiles input,
-                         this is performed implicitly"""))
+    # key="flip_horizontal"  
+    parser.add_argument(
+        "--p", "--flip",
+        type=bool,
+        default=False,
+        help="Flip the structure horizontally")
 
-    parser.append(
-        op.FloatOption(
-            "angle",
-            "a",
-            key="rotate",
-            default=0.0,
-            help_text="Rotate molecule counterclockwise by this angle"))
+    # key="flip_vertical"
+    parser.add_argument(
+        "--q", "--flop",
+        type=bool,
+        default=False,
+        help="Flip the structure vertically")
 
-    parser.append(
-        op.BoolOption(
-            "relative-angles",
-            "v",
-            key="relative_angles",
-            default=False,
-            help_text="Use relative bond angles"))
+    parser.add_argument(
+        "--c", "--show-carbons",
+        type=bool,
+        default=False,
+        help="Show element symbol for carbon atoms")
 
-    parser.append(
-        op.BoolOption(
-            "flip",
-            "p",
-            key="flip_horizontal",
-            default=False,
-            help_text="Flip the structure horizontally"))
+    parser.add_argument(
+        "--m", "--show-methyls",
+        type=bool,
+        help='''Show element symbols for methyl groups
+                     (implied if show-carbons is True)''')
 
-    parser.append(
-        op.BoolOption(
-            "flop",
-            "q",
-            key="flip_vertical",
-            default=False,
-            help_text="Flip the structure vertically"))
+    parser.add_argument(
+        "--y", "--hydrogens",
+        default="keep",
+        choices="keep add delete".split(),
+        help="""How to deal with explicit hydrogen atoms.
+                One of 'keep', 'add' or 'delete'. Note that
+                'add' will also trigger calculation of new
+                coordinates for the entire molecule.
+                Option 'keep' does nothing""")
 
-    parser.append(
-        op.BoolOption(
-            "show-carbons",
-            "c",
-            key="show_carbons",
-            help_text="Show element symbol for carbon atoms"))
+    parser.add_argument(
+        "--o", "--aromatic-circles",
+        type=bool,
+        default=False,
+        help="Draw circles instead of double bonds inside aromatic rings")
 
-    parser.append(
-        op.BoolOption(
-            "show-methyls",
-            "m",
-            key="show_methyls",
-            help_text='''Show element symbols for methyl groups
-                        (implied if show-carbons is True)'''))
+    parser.add_argument(
+        "--f", "--fancy-bonds",
+        type=bool,
+        default=False,
+        help="Draw fancier double and triple bonds")
 
-    parser.append(
-        op.SelectOption(
-            "hydrogens",
-            "y",
-            key="hydrogens",
-            # default="keep",
-            valid_range="keep add delete".split(),
-            help_text="""How to deal with explicit hydrogen atoms.
-                        One of 'keep', 'add' or 'delete'. Note that
-                        'add' will also trigger calculation of new
-                        coordinates for the entire molecule.
-                        Option 'keep' does nothing"""))
+    parser.add_argument(
+        "--g", "--markers",
+        type=str,
+        help="""Give each atom and each bond a unique
+                marker that can be used for attaching
+                electron movement arrows.
+                With value 'a', atom 2 will be labeled
+                @{a2}, and its bond to atom 5 @{a2-5}.""")
 
-    parser.append(
-        op.BoolOption(
-            "aromatic-circles",
-            "o",
-            key="aromatic_circles",
-            default=False,
-            help_text="Draw circles instead of double bonds inside aromatic rings"))
+    parser.add_argument(
+        "--n", "--atom-numbers",
+        type=bool,
+        default=False,
+        help="""Show the molfile number of each atom next to it.
+                     When this option is set, charges and implicit
+                     hydrogens will not be shown""")
 
-    parser.append(
-        op.BoolOption(
-            "fancy-bonds",
-            "f",
-            key="fancy_bonds",
-            default=False,
-            help_text="Draw fancier double and triple bonds"))
+    parser.add_argument(
+        "--s", "--bond-scale",
+        type=str,
+        default="normalize",
+        choices="normalize keep scale".split(),
+        help="""How to scale the lengths of bonds
+                     (one of 'keep', 'scale', or 'normalize')""")
 
-    parser.append(
-        op.StringOption(
-            "markers",
-            "g",
-            help_text="""Give each atom and each bond a unique
-                        marker that can be used for attaching
-                        electron movement arrows.
-                        With value 'a', atom 2 will be labeled
-                        @{a2}, and its bond to atom 5 @{a2-5}."""))
+    parser.add_argument(
+        "--t", "--bond-stretch",
+        type=float,
+        default=1.0,
+        help="""Used as scaling factor (with --bond-scale=scale)
+                or average (with --bond-scale=normalize) for bond
+                lengths""")
 
-    parser.append(
-        op.BoolOption(
-                    "atom-numbers",
-                    "n",
-                    key="atom_numbers",
-                    default=False,
-                    help_text="""Show the molfile number of each atom next to it.
-                                When this option is set, charges and implicit
-                                hydrogens will not be shown"""))
+    # key="chemfig_command",
+    parser.add_argument(
+        "--w", "--wrap-chemfig",
+        type=bool,
+        help=r"Wrap generated code into \chemfig{...} command")
 
-    parser.append(
-        op.SelectOption(
-            "bond-scale",
-            "s",
-            key="bond_scale",
-            # default="normalize",
-            valid_range="normalize keep scale".split(),
-            help_text="""How to scale the lengths of bonds
-                        (one of 'keep', 'scale', or 'normalize')"""))
+    parser.add_argument(
+        "--l", "--submol-name",
+        type=str,
+        help=r"""If a name is given, wrap generated code into
+                      chemfig \definesubmol{name}{...} command""")
 
-    parser.append(
-        op.FloatOption(
-            "bond-stretch",
-            "t",
-            key="bond_stretch",
-            default=1.0,
-            help_text="""Used as scaling factor (with --bond-scale=scale)
-                        or average (with --bond-scale=normalize) for bond
-                        lengths"""))
+    parser.add_argument(
+        "--e", "--entry-atom",
+        default=None,
+        help="""Number of first atom to be rendered. Relevant only
+                     if generated code is to be used as sub-molecule""")
 
-    parser.append(
-        op.BoolOption(
-            "wrap-chemfig",
-            "w",
-            key="chemfig_command",
-            help_text=r"Wrap generated code into \chemfig{...} command"))
+    parser.add_argument(
+        "--x", "--exit-atom",
+        default=None,
+        help="""Number of last atom to be rendered. Relevant only
+                     if generated code is to be used as sub-molecule""")
 
-    parser.append(
-        op.StringOption(
-            "submol-name",
-            "l",
-            key="submol_name",
-            help_text=r"""If a name is given, wrap generated code into
-                          chemfig \definesubmol{name}{...} command"""))
+    # NOTE(meawoppl) - likely broken as ported
+    parser.add_argument(
+        "--k", "--cross-bond",
+        default=None,
+        help="""Specify bonds that should be drawn on top of others
+                they cross over. Give the start and the end atoms.
+                Example for one bond: --cross-bond=5-6
+                Example for two bonds: --crossbond=4-8,12-13""")
 
-    parser.append(
-        op.IntOption(
-            "entry-atom",
-            "e",
-            key="entry_atom",
-            default=None,
-            help_text="""Number of first atom to be rendered. Relevant only
-                         if generated code is to be used as sub-molecule"""))
+    parser.add_argument(
+        "target",
+        metavar="TARGET",
+        type=str,
+        required=True,
+        help="A filename or smiles input based on --i")
 
-    parser.append(
-        op.IntOption(
-            "exit-atom",
-            "x",
-            key="exit_atom",
-            default=None,
-            help_text="""Number of last atom to be rendered. Relevant only
-                        if generated code is to be used as sub-molecule"""))
+    # NOTE(meawoppl) - PORTED FROM HARDCODED.  Don't reccomend changing
+    parser.add_argument(
+        "--input_mode",
+        choices=["auto"],  # "auto molfile molblock smilesfile smiles".split()?
+        default="auto")
 
-    parser.append(
-        op.RangeOption(
-            "cross-bond",
-            "k",
-            key="cross_bond",
-            default=None,
-            help_text="""Specify bonds that should be drawn on top of others
-                         they cross over. Give the start and the end atoms.
-                         Example for one bond: --cross-bond=5-6
-                         Example for two bonds: --crossbond=4-8,12-13"""))
+    parser.add_argument(
+        "--relative_angles",
+        default=False,
+        choices=[False])
+
+    parser.add_argument(
+        "--bond_round",
+        default=3,
+        choices=[3],
+        help="round bond lengths to this many decimal digits")
+
+    parser.add_argument(
+        "--angle_round",
+        default=1,
+        choices=[1],
+        help="round angles to this many digits")
+
+    parser.add_argument(
+        "--quadrant_tolerance",
+        default=0.1,
+        choices=[0.1],
+        help="tolerance for angle impingement on atom quadrants, range 0 to 1")
 
     return parser
 
 
 if __name__ == '__main__':
     parser = getParser()
-    print(parser.format_help(indent=32, linewidth=80, separator=''))
-    print()
-    shorts, longs = parser.format_for_getopt()
-    print(longs)
-    print(shorts)
-
-    # list unused option letters
-    from string import ascii_lowercase as letters
-    print("unused short options:", ','.join(set(letters) - set(shorts)))
-
-    #print
-    #tags = parser.form_tags()
-    #print tags
-    #for tag in tags:
-        #print tag
-        #print
+    parser.print_help()

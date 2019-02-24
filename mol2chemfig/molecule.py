@@ -1,19 +1,16 @@
-'''
-parse a molfile molecule and render to chemfig code
-'''
+import math
 
-import math, sys
+# TODO(meawoppl) Import tidy
+import mol2chemfig.chemfig_mappings as cfm
+from mol2chemfig.common import MCFError, Counter
 
-import chemfig_mappings as cfm
-from common import MCFError, Counter, debug
-
-from atom import Atom
-from bond import Bond, DummyFirstBond, AromaticRingBond, compare_positions
-
-from indigo import IndigoException
+from mol2chemfig.atom import Atom
+from mol2chemfig.bond import \
+    Bond, DummyFirstBond, AromaticRingBond, compare_positions
+from mol2chemfig.indigo import Indigo
 
 
-class Molecule(object):
+class Molecule:
     bond_scale = 1.0        # can be overridden by user option
     exit_bond = None        # the first bond in the tree that connects to the exit atom
 
@@ -61,7 +58,7 @@ class Molecule(object):
                 self.exit_atom = self.exit_bond.end_atom
 
             # flag all atoms between the entry atom and the exit atom - these
-            # will be part of the trunk, all others will be rendered as branches
+            # will be part of the trunk, others will be rendered as branches
             if self.entry_atom is not self.exit_atom:
                 flagged_bond = self.exit_bond
 
@@ -131,7 +128,8 @@ class Molecule(object):
         if unbonded:
             if fragments:
                 anchor = fragments[-1][-1][-1]
-            else: # several atoms, but no bonds
+            else:
+                # several atoms, but no bonds
                 anchor, unbonded = unbonded[0], unbonded[1:]
 
             for atom in unbonded:
@@ -188,8 +186,7 @@ class Molecule(object):
             else:
                 atom_pairs = rest
 
-
-    def treebonds(self,root=False):
+    def treebonds(self, root=False):
         '''
         return a list with all bonds in the molecule tree
         '''
@@ -475,7 +472,7 @@ class Molecule(object):
         # for bond scaling that may have taken place
         outer_r *= self.bond_scale
 
-        alpha = ( math.pi / 2 - math.pi / len(ringbonds) )
+        alpha = (math.pi / 2 - math.pi / len(ringbonds))
         inner_r = math.sin(alpha) * outer_r
 
         arb = AromaticRingBond(self.options, bond, angle, outer_r, inner_r)

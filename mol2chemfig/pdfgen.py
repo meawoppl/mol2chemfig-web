@@ -3,98 +3,78 @@ generate a pdf from a parsed mol2chemfig molecule.
 return the result in a string.
 '''
 import os
-import shutil
+import subprocess
+import tempfile
 
-from tempfile import mkdtemp
+MOLQ_TEX = 'molecule.tex'
+MOLQ_PDF = 'molecule.pdf'
 
-latexfn = 'molecule.tex'
-pdfname = 'molecule.pdf'
-latexcmd = 'pdflatex -interaction=nonstopmode %s > /dev/null' % latexfn
+THIS_DIR, _ = os.path.split(os.path.dirname(os.path.abspath(__file__)))
 
-m2pkg_path = '/home/py-chemist/Projects/git_control/mol_2_chemfig/mol2chemfig'
-pkg = '/mol2chemfig.sty'
+STYLE_FILE_NAME = 'mol2chemfig.sty'
+with open(os.path.join(THIS_DIR, STYLE_FILE_NAME)) as f:
+    STYLE_FILE_CONTENTS = f.read()
+
+
+class DirCtx:
+    def __init__(self, todir: str):
+        self._to = todir
+
+    def __enter__(self):
+        self._previous = os.getcwd()
+        os.chdir(self._to)
+
+    def __exit__(self, *args):
+        os.chdir(self._previous)
+
+
+def call_latex(source: str, files={}) -> bytes:
+    assert source in files
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        with DirCtx(tempdir):
+            for name, contents in files.items():
+                with open(name, "w") as f:
+                    f.write(contents)
+
+            latex_call = ("pdflatex" "-interaction=nonstopmode", source)
+            try:
+                subprocess.check_call(latex_call)
+            except subprocess.CalledProcessError as e:
+                print("Failed Running Latex: " + latex_call)
+                print(e.output)
+                raise
+            
+            target = source.replace(".tex", ".pdf")
+            with open(target, 'rb') as f:
+                return f.read()
 
 
 def pdfgen(mol):
-    tempdir = mkdtemp()
-    os.symlink(m2pkg_path + pkg, tempdir + pkg)
-
-    chemfig = mol.render_server()
-    width, height = mol.dimensions()
-
-    atomsep = 16
-    fixed_extra = 28
-
-    # NOTE(meawoppl) !??!?
-    global width_all, height_all
-    width_all = round(atomsep * width) + fixed_extra
-    height_all = round(atomsep * height) + fixed_extra
-
-    latex = latex_template % locals()
-
-    curdir = os.getcwd()
-    os.chdir(tempdir)
-
-    open(latexfn, 'w').write(latex)
-    os.system(latexcmd)
-
-    try:
-        pdfstring = open(pdfname).read()
-    except IOError:
-        return False, None
-    finally:
-        os.chdir(curdir)
-        shutil.rmtree(tempdir)
-
-    return True, pdfstring
-
-
-def update_pdf(mol):
-    import tempfile
     with tempfile.TemporaryDirectory() as tempdir:
-        # create the symlink to the mol2chemfig package
-        os.symlink(m2pkg_path + pkg, tempdir + pkg)
-
-        chemfig = r"\chemfig {" + mol + "}"
+        chemfig = mol.render_server()
+        width, height = mol.dimensions()
 
         atomsep = 16
-        fixed_extra = 28
 
-        width = width_all
-        height = height_all
+        latex = latex_template.format(
+            width=width, height=height, atomsep=atomsep, chemfig=chemfig)
 
-        latex = latex_template % locals()
-
-        curdir = os.getcwd()
-        os.chdir(tempdir)
-
-        with open(latexfn, 'w') as f:
-            f.write(latex)
-
-        os.system(latexcmd)
-
-        try:
-            with open(pdfname, "rb") as f:
-            pdfstring = f.read()
-        except IOError:
-            return False, None
-        finally:
-            os.chdir(curdir)
-            shutil.rmtree(tempdir)
-
-    return True, pdfstring
+        return call_latex(
+            MOLQ_TEX,
+            files={STYLE_FILE_NAME: STYLE_FILE_CONTENTS, MOLQ_TEX: latex})
 
 
 latex_template = r'''
 \documentclass{minimal}
 \usepackage{xcolor, mol2chemfig}
-\usepackage[margin=(margin)spt,papersize={%(width)spt, %(height)spt}]{geometry}
+\usepackage[margin=(margin)spt,papersize={{width}pt, {height}pt}]{geometry}
 
 \usepackage[helvet]{sfmath}
 \setcrambond{2.5pt}{0.4pt}{1.0pt}
 \setbondoffset{1pt}
 \setdoublesep{2pt}
-\setatomsep{%(atomsep)spt}
+\setatomsep{{atomsep}pt}
 \renewcommand{\printatom}[1]{\fontsize{8pt}{10pt}\selectfont{\ensuremath{\mathsf{#1}}}}
 
 \setlength{\parindent}{0pt}
@@ -103,7 +83,7 @@ latex_template = r'''
 \vspace*{\fill}
 \vspace{-8pt}
 \begin{center}
-%(chemfig)s
+{chemfig}
 \end{center}
 \vspace*{\fill}
 \end{document}

@@ -2,19 +2,14 @@ import copy
 import math
 
 import mol2chemfig.chemfig_mappings as cfm
-
-# bond stereo properties and valences
-from indigo import Indigo
-
+from mol2chemfig.indigo import Indigo
 # Indigo.UP : stereo "up" bond
 # Indigo.DOWN : stereo "down" bond
 # Indigo.EITHER : stereo "either" bond
 # Indigo.CIS : "Cis" double bond
 # Indigo.TRANS : "Trans" double bond
 # zero : not a stereo bond of any kind
-
 # bond_type: 1,2,3,4 for single, double, triple, aromatic
-
 # map indigo's bond specifiers to m2cf custom ones.
 bond_mapping = {
     1: 'single',
@@ -61,7 +56,7 @@ def compare_positions(x1, y1, x2, y2):
     return length, angle
 
 
-class Bond(object):
+class Bond:
     '''
     helper class for molecule.Molecule
 
@@ -108,11 +103,13 @@ class Bond(object):
             if self.options['flip_vertical'] != self.options['flip_horizontal']:
                 stereo = Indigo.UP + Indigo.DOWN - stereo
 
-        if stereo in (Indigo.UP, Indigo.DOWN, Indigo.EITHER): # implies single bond
+        if stereo in (Indigo.UP, Indigo.DOWN, Indigo.EITHER):
+            # implies a single bond
             self.bond_type = bond_mapping[stereo]
 
-        else: # no interesting stereo property - simply go with bond valence
-              # or else keep passed-in string specifier
+        else:
+            # no interesting stereo property - simply go with bond valence
+            # or else keep passed-in string specifier
             self.bond_type = bond_mapping.get(bond_type, bond_type)
 
         # bonds now are also the nodes in the molecule tree. These two
@@ -130,7 +127,7 @@ class Bond(object):
         marker = self.options.get('markers', None)
 
         if marker is not None:
-            ids = [self.start_atom.idx +1, self.end_atom.idx +1]
+            ids = [self.start_atom.idx + 1, self.end_atom.idx + 1]
             ids.sort()
             self.marker = '%s%s-%s' % (marker, ids[0], ids[1])
         else:
@@ -447,19 +444,19 @@ class Bond(object):
                 self.bond_type = 'decorated'
 
         code = cfm.format_bond(
-                    self.options,
-                    self.angle,
-                    self.parent.angle,
-                    self.bond_type,
-                    self.clockwise,
-                    self.is_last,
-                    self.length,
-                    self.start_atom.string_pos,
-                    end_string_pos,
-                    self.tikz_styles,
-                    self.tikz_values,
-                    self.marker
-               )
+            self.options,
+            self.angle,
+            self.parent.angle,
+            self.bond_type,
+            self.clockwise,
+            self.is_last,
+            self.length,
+            self.start_atom.string_pos,
+            end_string_pos,
+            self.tikz_styles,
+            self.tikz_values,
+            self.marker
+        )
 
         return code
 
@@ -531,10 +528,10 @@ class AromaticRingBond(Bond):
         on our own attributes.
         '''
         ring_bond_code, ring_code, comment = cfm.format_aromatic_ring(
-                                                             self.options,
-                                                             self.angle,
-                                                             self.parent_angle,
-                                                             self.length,
-                                                             self.radius)
+            self.options,
+            self.angle,
+            self.parent_angle,
+            self.length,
+            self.radius)
 
         return self.indent(level, ring_bond_code, ring_code, comment)
