@@ -31,7 +31,7 @@ def compare_positions(x1, y1, x2, y2):
     xdiff = x2 - x1
     ydiff = y2 - y1
 
-    length = (xdiff**2 + ydiff**2) ** 0.5
+    length = (xdiff ** 2 + ydiff ** 2) ** 0.5
 
     if xdiff == 0:
         if ydiff < 0:
@@ -40,7 +40,7 @@ def compare_positions(x1, y1, x2, y2):
             angle = 90
 
     else:
-        raw_angle = math.atan(abs(ydiff / xdiff)) * 180/pi
+        raw_angle = math.atan(abs(ydiff / xdiff)) * 180 / math.pi
 
         if ydiff >= 0:
             if xdiff > 0:
@@ -76,13 +76,13 @@ class Bond:
     # flag for bonds that should render their end atoms
     # as phantoms: Ring closures and cross bonds
     to_phantom = False
-    
+
     is_trunk = False  # by default, bonds are not part of the trunk
     parent = None     # will be assigned when bonds are added to the tree.
-    
+
     # only significant in double bonds in rings that are
     # not drawn with aromatic circles
-    clockwise = 0           
+    clockwise = 0
 
     def __init__(self,
                  options,
@@ -100,7 +100,7 @@ class Bond:
         self.tikz_values = {}
 
         if stereo in (Indigo.UP, Indigo.DOWN):
-            if self.options['flip_vertical'] != self.options['flip_horizontal']:
+            if self.options.flip_vertical != self.options.flip_horizontal:
                 stereo = Indigo.UP + Indigo.DOWN - stereo
 
         if stereo in (Indigo.UP, Indigo.DOWN, Indigo.EITHER):
@@ -138,25 +138,27 @@ class Bond:
         determine bond angle and distance between two atoms
         '''
         return compare_positions(
-                                 self.start_atom.x,
-                                 self.start_atom.y,
-                                 self.end_atom.x,
-                                 self.end_atom.y
-                                )
+            self.start_atom.x,
+            self.start_atom.y,
+            self.end_atom.x,
+            self.end_atom.y
+        )
 
     def is_clockwise(self, center_x, center_y):
         '''
         determine whether the bond will be drawn clockwise
         or counterclockwise relative to center
         '''
-        if self.clockwise: # assign only once
+        # assign only once
+        if self.clockwise:
             return
 
-        center_dist, center_angle = compare_positions(
-                                 self.end_atom.x,
-                                 self.end_atom.y,
-                                 center_x,
-                                 center_y)
+        _, center_angle = compare_positions(
+            self.end_atom.x,
+            self.end_atom.y,
+            center_x,
+            center_y
+        )
 
         # bond is already rotated at this stage, so we need to
         # rotate the ring center also
@@ -315,22 +317,22 @@ class Bond:
         # outside rings and if the double bond connects to explicit atoms,
         # plain symmetric double bonds tend to look better.
 
-        if not self.clockwise and \
-               (self.start_atom.explicit or self.end_atom.explicit):
+        if (not self.clockwise and
+                (self.start_atom.explicit or self.end_atom.explicit)):
 
             if self.start_atom.explicit and self.end_atom.explicit:
                 return None
 
-            elif self.start_atom.explicit and \
-                 (end_angles['left'] is None or \
-                   (90 <= abs(end_angles['left']) <= 135 and \
-                    90 <= abs(end_angles['right']) <= 135)):
+            elif (self.start_atom.explicit and
+                  (end_angles['left'] is None or
+                   (90 <= abs(end_angles['left']) <= 135 and
+                    90 <= abs(end_angles['right']) <= 135))):
                         return None
 
-            elif self.end_atom.explicit and \
-                 (start_angles['left'] is None or \
-                   (90 <= abs(start_angles['left']) <= 135 and \
-                    90 <= abs(start_angles['right']) <= 135)):
+            elif (self.end_atom.explicit and
+                  (start_angles['left'] is None or
+                   (90 <= abs(start_angles['left']) <= 135 and
+                    90 <= abs(start_angles['right']) <= 135))):
                         return None
 
         # at this point we are looking at either only implicit atoms

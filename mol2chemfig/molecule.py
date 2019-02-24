@@ -1,18 +1,19 @@
+import collections
 import math
 
 # TODO(meawoppl) Import tidy
 import mol2chemfig.chemfig_mappings as cfm
-from mol2chemfig.common import MCFError, Counter
+from mol2chemfig.common import MCFError
 
 from mol2chemfig.atom import Atom
 from mol2chemfig.bond import \
     Bond, DummyFirstBond, AromaticRingBond, compare_positions
-from mol2chemfig.indigo import Indigo
 
+from indigo import IndigoException
 
 class Molecule:
     bond_scale = 1.0        # can be overridden by user option
-    exit_bond = None        # the first bond in the tree that connects to the exit atom
+    exit_bond = None        # first bond that connects to the exit atom
 
     def __init__(self, options, tkmol):
         self.options = options
@@ -50,7 +51,6 @@ class Molecule:
 
         self.entry_atom, self.exit_atom = self.pickFirstLastAtoms()
         self.root = self.parseTree(start_atom=None, end_atom=self.entry_atom)
-
 
         if len(self.atoms) > 1:
             if self.exit_atom is None:  # pick a default exit atom if needed
@@ -163,7 +163,8 @@ class Molecule:
                     else:
                         unconnected.append(r)
 
-                if len(unconnected) == len(rest): # no new pairs found in this loop iteration
+                if len(unconnected) == len(rest):
+                    # no new pairs found in this loop iteration
                     return connected_pairs, unconnected
                 else:
                     rest = unconnected
@@ -230,7 +231,8 @@ class Molecule:
 
             # very special case: the bond _might_ already be the very
             # last one to be rendered - then we just tag it
-            if self.exit_bond.descendants and bond is self.exit_bond.descendants[-1]:
+            if (self.exit_bond.descendants and
+                    bond is self.exit_bond.descendants[-1]):
                 bond.set_cross(last=True)
                 continue
 
@@ -285,7 +287,8 @@ class Molecule:
 
             the_bond = bond
 
-            while the_bond is not None and the_bond.end_atom is not self.entry_atom:
+            while (the_bond is not None and
+                   the_bond.end_atom is not self.entry_atom):
                 distance += 1
                 the_bond = the_bond.parent
 
@@ -301,17 +304,20 @@ class Molecule:
         so that only the first angle is absolute.
         '''
         if self.options['entry_atom'] is not None:
-            entry_atom = self.atoms.get(self.options['entry_atom'] - 1) # -> zero index
+            # -> zero index
+            entry_atom = self.atoms.get(self.options['entry_atom'] - 1)
             if entry_atom is None:
                 raise MCFError('Invalid entry atom number')
 
-        else: # pick a default atom with few neighbors
+        else:
+            # pick a default atom with few neighbors
             atoms = self.atoms.values()
             atoms.sort(key=lambda atom: len(atom.neighbors))
             entry_atom = atoms[0]
 
         if self.options['exit_atom'] is not None:
-            exit_atom = self.atoms.get(self.options['exit_atom'] - 1) # -> zero index
+            # -> zero index
+            exit_atom = self.atoms.get(self.options['exit_atom'] - 1)
             if exit_atom is None:
                 raise MCFError('Invalid exit atom number')
         else:
@@ -367,7 +373,8 @@ class Molecule:
             start = bond.source().index()
             end = bond.destination().index()
 
-            bond_type = bond.bondOrder()  # 1,2,3,4 for single, double, triple, aromatic
+            # 1,2,3,4 for single, double, triple, aromatic
+            bond_type = bond.bondOrder()
             stereo = bond.bondStereo()
 
             start_atom = self.atoms[start]
@@ -399,8 +406,8 @@ class Molecule:
 
             # guard against reentrant bonds. Can those even still happen?
             # apparently they can, even if I don't really understand how.
-            if (start_idx, end_idx) in self.seen_bonds \
-                                 or (end_idx, start_idx) in self.seen_bonds:
+            if ((start_idx, end_idx) in self.seen_bonds
+                    or (end_idx, start_idx) in self.seen_bonds):
                 return None
 
             # if we get here, the bond is not in the tree yet
@@ -515,7 +522,8 @@ class Molecule:
         center_distances = []
 
         for atom in atoms:
-            length, angle = compare_positions(atom.x, atom.y, center_x, center_y)
+            length, angle = compare_positions(
+                atom.x, atom.y, center_x, center_y)
             center_distances.append(length)
             atom_angles.append((atom, angle))
 
@@ -549,8 +557,10 @@ class Molecule:
         all_rings = []
 
         for ring in self.tkmol.iterateSSSR():
-            # bond-order == 4 means "aromatic"; all rings bonds must be aromatic
-            is_aromatic = all(bond.bondOrder() == 4 for bond in ring.iterateBonds())
+            # bond-order == 4 means "aromatic";
+            # all rings bonds must be aromatic
+            is_aromatic = all(
+                bond.bondOrder() == 4 for bond in ring.iterateBonds())
             all_rings.append((is_aromatic, ring))
 
         # prefer aromatic rings to nonaromatic ones, so that double bonds on
@@ -570,8 +580,9 @@ class Molecule:
         elif self.options['bond_scale'] == 'normalize':
             lengths = [bond.length for bond in self.treebonds()]
             lengths = [round(l, self.options['bond_round']) for l in lengths]
-            lengths = Counter(lengths)
-            self.bond_scale = self.options['bond_stretch'] / lengths.most_common()
+            lengths = collections.Counter(lengths)
+            self.bond_scale = \
+                self.options['bond_stretch'] / lengths.most_common()
 
         elif self.options['bond_scale'] == 'scale':
             self.bond_scale = self.options['bond_stretch']

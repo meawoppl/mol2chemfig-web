@@ -1,19 +1,10 @@
-'''
-accept input from command line or through the web and
-return the result.
-'''
-
 import urllib
 
-# TODO(meawoppl) - Sweep import rename
-import mol2chemfig.common as common
+import mol2chemfig.common
+import mol2chemfig.options
+import mol2chemfig.molecule
+
 from mol2chemfig.indigo import Indigo, IndigoException
-import mol2chemfig.options as options
-import mol2chemfig.molecule as molecule
-
-
-class HelpError(common.MCFError):
-    pass
 
 
 class Processor:
@@ -21,13 +12,13 @@ class Processor:
     parses input and invokes backend, returns result
     '''
     def __init__(self):
-        self.optionparser = options.getParser()
+        parser = mol2chemfig.options.getParser()
 
         # data obtained from the proper source go here
         self.data_string = None
 
         # parse options and arguments
-        self.args = self.optionparser.parse_args()
+        self.args = parser.parse_args()
 
         if self.args.input == 'file':
             with open(self.args.target) as f:
@@ -38,12 +29,9 @@ class Processor:
         # Check to see if the input is pubchemId
         try:
             pubchem_id = int(self.data)
+            self.data = mol2chemfig.common.get_pubchem_sdf(pubchem_id)
         except ValueError:
             pubchem_id = None
-
-        if pubchem_id is not None:
-            url = common.pubchem_url % pubchem_id
-            self.data = urllib.urlopen(url).read()
 
     def get_mol(self):
         '''
@@ -65,6 +53,6 @@ class Processor:
         if not tkmol.hasCoord() or self.args.recalculate_coordinates:
             tkmol.layout()
 
-        mol = molecule.Molecule(self.args, tkmol)
+        mol = mol2chemfig.molecule.Molecule(self.args, tkmol)
 
         return mol
