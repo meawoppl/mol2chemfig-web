@@ -61,16 +61,15 @@ class Processor(object):
         '''
         # catch empty input
         if not self.rawargs and not self.data:
-            ht = self.help_text()
-
-            raise HelpError(ht)
+            raise HelpError(self.help_text())
 
         # parse options and arguments
         try:
             parsed_options, datalist = self.optionparser.process_cli(self.rawargs)
         except Exception as e:
             msg = e.message
-            if str(msg).endswith('not recognized'): # getopt error
+            if str(msg).endswith('not recognized'):
+                # getopt error
                 msg = str(msg) + \
                       ". Try %s --help to see a list of available options." % self.progname
             raise HelpError(msg)
@@ -100,7 +99,8 @@ class Processor(object):
 
         if not self.rpc and self.options['input'] == 'file':
             try:
-                data = open(data).read()
+                with open(data) as f:
+                    data = f.read()
             except IOError:
                 raise common.MCFError("Can't read file %s" % data)
 
@@ -131,9 +131,10 @@ class Processor(object):
         tkmol = self.parseMolecule()
 
         # we now know how to deal with orphan atoms
-        #atoms, bonds = tkmol.countAtoms(), tkmol.countBonds()
-        #if atoms <= 1 or bonds == 0:
-            #raise common.MCFError("Input contains no bonds---can't render structure")
+        # atoms, bonds = tkmol.countAtoms(), tkmol.countBonds()
+        # if atoms <= 1 or bonds == 0:
+            # err_msg = "Input contains no bonds---can't render structure"
+            # raise common.MCFError(err_msg)
 
         mol = molecule.Molecule(self.options, tkmol)
 
@@ -163,8 +164,8 @@ class Processor(object):
 
             self.data_string = pubchemContent
 
-        #common.debug('rpc: %s' % self.rpc)
-        #common.debug('data ---\n%s\n---' % self.data_string)
+        # print('rpc: %s' % self.rpc)
+        # print('data ---\n%s\n---' % self.data_string)
 
         try:
             tkmol = Indigo().loadMolecule(self.data_string)
@@ -208,7 +209,7 @@ def process(rawargs=None,
         msg = msg[len('MCFError: '):]
         return False, e.message
 
-    except Exception as e:               # unexpected error - get full traceback
+    except Exception:               # unexpected error - get full traceback
         tb = traceback.format_exc()
         return False, tb
 

@@ -12,10 +12,14 @@ instantiation? The problem then is, of course,
 that client code will have to do both.
 '''
 
-import getopt, textwrap, re
+import getopt
+import textwrap
+import re
+
 
 class OptionError(Exception):
     pass
+
 
 class Option(object):
     collapseWs = re.compile('\s+')
@@ -37,10 +41,12 @@ class Option(object):
         self.key = key or long_name
         self.form_text = form_text or long_name
 
-        self.valid_range = valid_range # must precede assignment of self.default
+        # must precede assignment of self.default
+        self.valid_range = valid_range
 
         if default is None:
             default = self._default()
+
         self.default = self.value = default
 
         self.help_text = help_text
@@ -286,13 +292,11 @@ class OptionParser(object):
         # also maintain options ordered in a list
         self._options.append(option)
 
-
     def validKeys(self):
         '''
         required by the web form front end
         '''
         return self._option_by_key.keys()
-
 
     def option_values(self):
         '''
@@ -304,7 +308,6 @@ class OptionParser(object):
             option_dict[option.key] = option.value
 
         return option_dict
-
 
     def process_form_fields(self, fields):
         '''
@@ -323,7 +326,6 @@ class OptionParser(object):
                 warnings.append(msg)
 
         return self.option_values(), warnings
-
 
     def process_cli(self, rawinput):
         '''
@@ -392,7 +394,6 @@ class OptionParser(object):
 
 
 if __name__ == '__main__':  # test it
-
     p = OptionParser()
 
     p.append(BoolOption(

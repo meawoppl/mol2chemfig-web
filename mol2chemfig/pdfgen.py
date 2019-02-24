@@ -2,7 +2,9 @@
 generate a pdf from a parsed mol2chemfig molecule.
 return the result in a string.
 '''
-import os, shutil
+import os
+import shutil
+
 from tempfile import mkdtemp
 
 latexfn = 'molecule.tex'
@@ -12,25 +14,24 @@ latexcmd = 'pdflatex -interaction=nonstopmode %s > /dev/null' % latexfn
 m2pkg_path = '/home/py-chemist/Projects/git_control/mol_2_chemfig/mol2chemfig'
 pkg = '/mol2chemfig.sty'
 
+
 def pdfgen(mol):
     tempdir = mkdtemp()
     os.symlink(m2pkg_path + pkg, tempdir + pkg)
 
-    chemfig = mol.render_server()    
+    chemfig = mol.render_server()
     width, height = mol.dimensions()
 
     atomsep = 16
     fixed_extra = 28
-    
-    width = round(atomsep * width) + fixed_extra
-    height = round(atomsep * height) + fixed_extra
-    
+
+    # NOTE(meawoppl) !??!?
     global width_all, height_all
-    width_all = width
-    height_all = height
-    
+    width_all = round(atomsep * width) + fixed_extra
+    height_all = round(atomsep * height) + fixed_extra
+
     latex = latex_template % locals()
-    
+
     curdir = os.getcwd()
     os.chdir(tempdir)
 
@@ -46,38 +47,42 @@ def pdfgen(mol):
         shutil.rmtree(tempdir)
 
     return True, pdfstring
-    
+
+
 def update_pdf(mol):
-    tempdir = mkdtemp()
-    # create the symlink to the mol2chemfig package
-    os.symlink(m2pkg_path + pkg, tempdir + pkg)
+    import tempfile
+    with tempfile.TemporaryDirectory() as tempdir:
+        # create the symlink to the mol2chemfig package
+        os.symlink(m2pkg_path + pkg, tempdir + pkg)
 
-    chemfig = "\chemfig {"+ mol +"}"
-    
-    atomsep = 16
-    fixed_extra = 28    
+        chemfig = r"\chemfig {" + mol + "}"
 
-    width = width_all
-    height = height_all
-    
-    latex = latex_template % locals()
+        atomsep = 16
+        fixed_extra = 28
 
-    curdir = os.getcwd()
-    os.chdir(tempdir)
+        width = width_all
+        height = height_all
 
-    open(latexfn, 'w').write(latex)
-    os.system(latexcmd)
+        latex = latex_template % locals()
 
-    try:
-        pdfstring = open(pdfname).read()
-    except IOError:
-        return False, None
-    finally:
-        os.chdir(curdir)
-        shutil.rmtree(tempdir)
+        curdir = os.getcwd()
+        os.chdir(tempdir)
+
+        with open(latexfn, 'w') as f:
+            f.write(latex)
+
+        os.system(latexcmd)
+
+        try:
+            with open(pdfname, "rb") as f:
+            pdfstring = f.read()
+        except IOError:
+            return False, None
+        finally:
+            os.chdir(curdir)
+            shutil.rmtree(tempdir)
 
     return True, pdfstring
-
 
 
 latex_template = r'''

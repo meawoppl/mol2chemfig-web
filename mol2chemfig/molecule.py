@@ -12,6 +12,7 @@ from bond import Bond, DummyFirstBond, AromaticRingBond, compare_positions
 
 from indigo import IndigoException
 
+
 class Molecule(object):
     bond_scale = 1.0        # can be overridden by user option
     exit_bond = None        # the first bond in the tree that connects to the exit atom
@@ -86,7 +87,6 @@ class Molecule(object):
         # finally, render the thing and cache the result.
         self._rendered = self.render()
 
-
     def link_atoms(self, x, y):
         '''
         connect atoms with indexes x and y using a pseudo bond.
@@ -103,7 +103,6 @@ class Molecule(object):
 
         start_atom.neighbors.append(y)
         end_atom.neighbors.append(x)
-
 
     def connect_fragments(self):
         '''
@@ -137,7 +136,6 @@ class Molecule(object):
 
             for atom in unbonded:
                 self.link_atoms(anchor, atom)
-
 
     def molecule_fragments(self):
         '''
@@ -209,7 +207,6 @@ class Molecule(object):
 
         return allbonds
 
-
     def process_cross_bonds(self):
         '''
         if cross bonds have been declared:
@@ -251,15 +248,18 @@ class Molecule(object):
             bond_copy.to_phantom = True     # don't render atom again
             bond_copy.descendants = []      # forget copied descendants
 
-            if bond_copy.start_atom is not self.exit_atom: # usual case
+            if bond_copy.start_atom is not self.exit_atom:
+                # This is the usual case
                 # create a pseudo bond from the exit atom to the start atom
                 # pseudo bond will not be drawn, serves only to "move the pen"
-                pseudo_bond = Bond(self.options,
-                                self.exit_atom,
-                                bond_copy.start_atom)
+                pseudo_bond = Bond(
+                    self.options,
+                    self.exit_atom,
+                    bond_copy.start_atom)
 
                 pseudo_bond.set_link()
-                pseudo_bond.to_phantom = True      # don't render the atom, either
+                pseudo_bond.to_phantom = True
+                # don't render the atom, either
 
                 bond_copy.parent = pseudo_bond
                 pseudo_bond.descendants.append(bond_copy)
@@ -267,10 +267,10 @@ class Molecule(object):
                 pseudo_bond.parent = self.exit_bond
                 self.exit_bond.descendants.append(pseudo_bond)
 
-            else: # occasionally, the molecule's exit atom may be the starting point
-                  # of the elevated bond
+            else:
+                # occasionally, the molecule's exit atom may be
+                # the starting point of the elevated bond
                 self.exit_bond.descendants.append(bond_copy)
-
 
     def default_exit_bond(self):
         '''
@@ -326,8 +326,6 @@ class Molecule(object):
         '''
         Read some attributes from the toolkit atom object
         '''
-        coordinates = []
-
         # wrap all atoms and supply coordinates
         wrapped_atoms = {}
 
@@ -395,7 +393,8 @@ class Molecule(object):
         '''
         end_idx = end_atom.idx
 
-        if start_atom is None: # this is the first atom in the molecule
+        if start_atom is None:
+            # this is the first atom in the molecule
             bond = DummyFirstBond(self.options, end_atom=end_atom)
 
         else:
@@ -439,7 +438,6 @@ class Molecule(object):
 
         return bond
 
-
     def _getBond(self, tkbond):
         '''
         helper for aromatizeRing: find bond in parse tree that
@@ -453,7 +451,6 @@ class Molecule(object):
 
         # the bond must be going the other way ...
         return self.bonds[(end_idx, start_idx)]
-
 
     def aromatizeRing(self, ring, center_x, center_y):
         '''
@@ -496,7 +493,6 @@ class Molecule(object):
         bond_lengths = []
         bonds = []
 
-
         for tkbond in ring.iterateBonds():
             bond = self._getBond(tkbond)
             bonds.append(bond)
@@ -535,12 +531,14 @@ class Molecule(object):
         if is_aromatic and is_symmetric and self.options['aromatic_circles']:
             # ring meets all requirements to be displayed with circle inside
             self.aromatizeRing(ring, center_x, center_y)
+
             # flag bond angles as occupied
             for atom, angle in atom_angles:
                 atom.bond_angles.append(angle)
 
-        else:   # flag orientation individual bonds - will influence
-                # rendering of double bonds
+        else:
+            # flag orientation individual bonds - will influence
+            # rendering of double bonds
             for bond in bonds:
                 bond.is_clockwise(center_x, center_y)
 
@@ -613,26 +611,30 @@ class Molecule(object):
 
     def _renderBranches(self, output, level, bonds):
         '''
-        render a list of branching bonds indented and inside enclosing brackets.
+        Render a list of branching bonds indented and inside
+        enclosing brackets.
         '''
         branch_indent = self.options['indent']
 
         for bond in bonds:
-            output.append("(".rjust(level * branch_indent + cfm.BOND_CODE_WIDTH))
+            padding = level * branch_indent + cfm.BOND_CODE_WIDTH
+            output.append("(".rjust(padding))
             self._render(output, bond, level)
-            output.append(")".rjust(level * branch_indent + cfm.BOND_CODE_WIDTH))
+            output.append(")".rjust(padding))
 
     def _render(self, output, bond, level):
         '''
-        recursively render the molecule.
+        Recursively render the molecule.
         '''
         output.append(bond.render(level))
         branches = bond.descendants
 
-        if bond is self.exit_bond: # wrap all downstream bonds in branch
+        if bond is self.exit_bond:
+            # wrap all downstream bonds in branch
             self._renderBranches(output, level+1, branches)
 
-        elif branches: # prioritize bonds on the trunk from entry to exit
+        elif branches:
+            # prioritize bonds on the trunk from entry to exit
             for i, branch in enumerate(branches):
                 if branch.is_trunk:
                     first = branches.pop(i)

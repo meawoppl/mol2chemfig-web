@@ -5,12 +5,12 @@ Through-the-web command line client for mol2chemfig.
 Depends only on Python standard library modules.
 '''
 
+import sys
 # NOTE(meawoppl) - needs modernaiztion to http.Server/Client etc.
 # import httplib
-import sys
-import urllib
-
+# import urllib
 httplib = None
+urllib = None
 
 serverUrl = "localhost:80"
 servlet = "/mol2chemfig/test"
