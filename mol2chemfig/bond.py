@@ -17,13 +17,13 @@ from indigo import Indigo
 
 # map indigo's bond specifiers to m2cf custom ones.
 bond_mapping = {
-    1 : 'single',
-    2 : 'double',
-    3 : 'triple',
-    4 : 'aromatic', # not really used
-    Indigo.UP : 'upto',
-    Indigo.DOWN : 'downto',
-    Indigo.EITHER : 'either'
+    1: 'single',
+    2: 'double',
+    3: 'triple',
+    4: 'aromatic',    # not really used
+    Indigo.UP: 'upto',
+    Indigo.DOWN: 'downto',
+    Indigo.EITHER: 'either'
 }
 
 
@@ -73,15 +73,21 @@ class Bond(object):
     we can assign a parent. This has to occur later. So, initially
     we just know the start and the end atom.
     '''
-    is_last = False         # flag for bond that is the last descendant of
-                            # the exit bond - needed in rare case in
-                            # cases for bond formatting.
-    to_phantom = False      # flag for bonds that should render their end atoms
-                            # as phantoms: Ring closures and cross bonds
-    is_trunk = False        # by default, bonds are not part of the trunk
-    parent = None           # will be assigned when bonds are added to the tree.
-    clockwise = 0           # only significant in double bonds in rings that are
-                            # not drawn with aromatic circles
+    # flag for bond that is the last descendant of
+    # the exit bond - needed in rare case in
+    # cases for bond formatting.
+    is_last = False
+
+    # flag for bonds that should render their end atoms
+    # as phantoms: Ring closures and cross bonds
+    to_phantom = False
+    
+    is_trunk = False  # by default, bonds are not part of the trunk
+    parent = None     # will be assigned when bonds are added to the tree.
+    
+    # only significant in double bonds in rings that are
+    # not drawn with aromatic circles
+    clockwise = 0           
 
     def __init__(self,
                  options,
@@ -210,7 +216,7 @@ class Bond(object):
         end = max(10, self.cotan100(end_angle))
 
         self.tikz_styles.add("cross")
-        self.tikz_values.update( dict(bgstart=start, bgend=end))
+        self.tikz_values.update(dict(bgstart=start, bgend=end))
 
         self.is_last = last
 
@@ -232,7 +238,7 @@ class Bond(object):
         angles = [(a - reference_angle) % 360 for a in raw_angles]
         angles.sort()
 
-        return int(round(angles[0])), int(round(angles[-1] ))
+        return int(round(angles[0])), int(round(angles[-1]))
 
     def upstream_angles(self):
         '''
@@ -338,17 +344,21 @@ class Bond(object):
         elif self.clockwise == 1:
             side = "right"
 
-        else: # not in a ring. use scoring function to pick sides.
+        else:
+            # not in a ring. use scoring function to pick sides.
             _ap = self.angle_penalty
 
-            left_penalty = _ap(start_angles['left']) + _ap(end_angles['left'])
-            right_penalty = _ap(start_angles['right']) + _ap(end_angles['right'])
+            left_penalty = _ap(
+                start_angles['left']) + _ap(end_angles['left'])
+            right_penalty = _ap(
+                start_angles['right']) + _ap(end_angles['right'])
 
             if left_penalty < right_penalty:
                 side = "left"
             elif left_penalty > right_penalty:
                 side = "right"
-            else: # penalties equal - try to pick sides consistently
+            else:
+                # penalties equal - try to pick sides consistently
                 if abs(self.angle - 44.5) < 90:
                     side = "left"
                 else:
@@ -358,17 +368,21 @@ class Bond(object):
             start = 0
         else:
             if side == 'left':
-                start = self.shorten_stroke(start_angles['left'], start_angles['right'])
+                start = self.shorten_stroke(
+                    start_angles['left'], start_angles['right'])
             else:
-                start = self.shorten_stroke(start_angles['right'], start_angles['left'])
+                start = self.shorten_stroke(
+                    start_angles['right'], start_angles['left'])
 
         if self.end_atom.explicit:
             end = 0
         else:
             if side == 'left':
-                end = self.shorten_stroke(end_angles['left'], end_angles['right'])
+                end = self.shorten_stroke(
+                    end_angles['left'], end_angles['right'])
             else:
-                end = self.shorten_stroke(end_angles['right'], end_angles['left'])
+                end = self.shorten_stroke(
+                    end_angles['right'], end_angles['left'])
 
         return side, start, end
 

@@ -37,7 +37,17 @@ class Atom:
     # reserved angle for charges - needs to be big enough for 2+
     charge_turf = 50
 
-    def __init__(self, options, idx, x, y, element, hydrogens, charge, radical, neighbors):
+    def __init__(
+            self,
+            options,
+            idx,
+            x,
+            y,
+            element,
+            hydrogens,
+            charge,
+            radical,
+            neighbors):
         self.options = options
         self.idx = idx
         self.x = x
@@ -51,7 +61,6 @@ class Atom:
         # angles of all attached bonds - to be populated later
         self.bond_angles = []
 
-        # self.explicit = False  # flag for explicitly printed atoms - set later
         marker = self.options.get('markers', None)
         if marker is not None:
             self.marker = "%s%s" % (marker, self.idx + 1)
@@ -119,7 +128,9 @@ class Atom:
                 self.first_quadrant = 'east'
                 self.second_quadrant = 'west'
 
-        self.charge_angle = self._score_angles(self.charge_positions, self.charge_turf)[0]
+        self.charge_angle = self._score_angles(
+            self.charge_positions,
+            self.charge_turf)[0]
 
     def render_phantom(self):
         '''
