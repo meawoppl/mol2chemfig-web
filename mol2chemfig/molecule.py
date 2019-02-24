@@ -9,7 +9,8 @@ from mol2chemfig.atom import Atom
 from mol2chemfig.bond import \
     Bond, DummyFirstBond, AromaticRingBond, compare_positions
 
-from indigo import IndigoException
+from mol2chemfig.indigo import IndigoException
+
 
 class Molecule:
     bond_scale = 1.0        # can be overridden by user option
@@ -34,7 +35,7 @@ class Molecule:
         # positioning of implicit hydrogens and charges.
 
         for connection, bond in self.bonds.items():
-            first_idx, last_idx = connection
+            first_idx, _last_idx = connection
             self.atoms[first_idx].bond_angles.append(bond.angle)
 
         # this would be the place to work out the placement of the second
@@ -348,7 +349,7 @@ class Molecule:
 
             neighbors = [na.index() for na in ra.iterateNeighbors()]
 
-            x, y, z = ra.xyz()
+            x, y, _z = ra.xyz()
 
             wrapped_atoms[idx] = Atom(self.options,
                                       idx,

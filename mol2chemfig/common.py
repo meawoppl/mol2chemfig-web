@@ -1,9 +1,9 @@
-import urllib
-
-from mol2chemfig.options import getParser
+import urllib.request
 
 program = "mol2chemfig"
 version = "2.0.0"
+# pubchem url for retrieving sdf for numerical IDs
+PUBCHEM_URL_TEMPLATE = r"http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=%s&disopt=DisplaySDF"
 
 
 class MCFError(Exception):
@@ -13,12 +13,8 @@ class MCFError(Exception):
     pass
 
 
-# pubchem url for retrieving sdf for numerical IDs
-PUBCHEM_URL_TEMPLATE = r"http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=%s&disopt=DisplaySDF"
-
-
 def get_pubchem_sdf(pubchem_id: int):
-    return urllib.urlopen(PUBCHEM_URL_TEMPLATE % pubchem_id).read()
+    return urllib.request.urlopen(PUBCHEM_URL_TEMPLATE % pubchem_id).read()
 
 
 HEADER = """
