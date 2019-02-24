@@ -247,7 +247,7 @@ class Bond:
 
         # for the right angle, convert outer to inner
         if last is not None:
-            last = 360-last
+            last = 360 - last
 
         return dict(left=first, right=last)
 
@@ -259,7 +259,7 @@ class Bond:
 
         if last is not None:
             # for the left angle, convert outer to inner
-            last = 360-last
+            last = 360 - last
 
         return dict(left=last, right=first)
 
